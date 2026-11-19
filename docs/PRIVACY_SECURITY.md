@@ -160,7 +160,7 @@ If you never build the lane in, your binary cannot call `ouraring.com` — the c
 
 NOOP is sideloaded on every platform — there is no App Store or Play Store to update it — so an install
 that is never told about a release simply runs an old build indefinitely. Two paths address that, and
-both read the **same** public endpoint: `https://api.github.com/repos/ryanbr/noop/releases/latest`.
+both read the **same** public endpoint: `https://api.github.com/repos/jonashoelzel/noop/releases/latest` (this fork's releases; upstream NOOP checks `ryanbr/noop`).
 
 - **"Check for updates"** in Settings → About. Runs only when tapped. It has always existed;
   it was previously undocumented here, which is why this section is new rather than merely amended.

@@ -24,7 +24,9 @@ import java.net.URL
  */
 object UpdateCheck {
 
-    private const val ENDPOINT = "https://api.github.com/repos/ryanbr/noop/releases/latest"
+    // Fork (jonashoelzel/noop): check this fork's releases, which carry the Garmin features; upstream
+    // releases (ryanbr/noop) do not. Keep in step with the Swift update check.
+    private const val ENDPOINT = "https://api.github.com/repos/jonashoelzel/noop/releases/latest"
 
     sealed interface Result {
         data class UpToDate(val version: String) : Result
