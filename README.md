@@ -48,6 +48,38 @@
 
 ---
 
+## About this fork
+
+> **This is a friendly fork of [ryanbr/noop](https://github.com/ryanbr/noop).** All credit for NOOP —
+> the strap protocol work, the on-device analytics, the apps on every platform — belongs to the
+> upstream maintainers and contributors. This fork tracks upstream and is not a replacement for it;
+> if you want the original offline-first NOOP, use [upstream](https://github.com/ryanbr/noop).
+
+Upstream NOOP is deliberately offline and privacy-first: no server, no account, nothing leaves the
+device unless you explicitly export it. This fork keeps the on-device core intact but has a
+different goal: **integrating NOOP with the Strava and Garmin ecosystems** for people who train with
+both.
+
+What the fork is working towards:
+
+- **Garmin → NOOP.** Bring rides recorded on a Garmin bike computer (e.g. an Edge 840) — GPS,
+  heart rate, power, cadence — into NOOP so they count towards strain, recovery and the activity
+  history alongside the strap data.
+- **NOOP → Strava and Garmin Connect.** Share runs recorded in NOOP (phone GPS + strap heart rate)
+  to Strava and Garmin Connect, instead of exporting and uploading files by hand.
+- Rides recorded on the Garmin device already reach Strava through Garmin Connect's own sync, so the
+  fork does not duplicate that path.
+
+These integrations are **opt-in** and talk to third-party services (Strava, Garmin) only when you
+connect an account and turn them on. Everything else behaves exactly like upstream. Because they go
+against upstream's off-device scope (see [`docs/SCOPE.md`](docs/SCOPE.md)), they live here rather
+than being proposed upstream; bug fixes and improvements that fit upstream's scope are sent back.
+
+The rest of this README is upstream's and describes NOOP as a whole; download links and badges below
+point at upstream releases.
+
+---
+
 ## Download
 
 Pre-built apps you can run right now:
