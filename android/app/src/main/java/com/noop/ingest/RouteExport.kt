@@ -209,7 +209,7 @@ object RouteExport {
         canon.replaceFirstChar { if (it.isLowerCase()) it.titlecase(java.util.Locale.US) else it.toString() }
 
     /** FIT `sport` enum (session field 5). Round-trips through the importer's `sportName`. */
-    private fun fitSport(canon: String): Int = when (canon) {
+    internal fun fitSport(canon: String): Int = when (canon) {
         "run" -> 1
         "cycle" -> 2
         "swim" -> 5

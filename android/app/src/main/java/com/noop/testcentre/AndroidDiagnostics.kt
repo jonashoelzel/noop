@@ -518,7 +518,7 @@ object AndroidDiagnostics {
             add("Active deviceId: $active" + if (active == "my-whoop") "" else "  (imports + spine under my-whoop)")
             // Per-source STORED counts; ids de-duped so a single-WHOOP install (active == my-whoop) lists once.
             val ids = listOf(active, "my-whoop", "$active-noop", "my-whoop-noop",
-                "activity-file", "lifting", "apple-health", "health-connect").distinct()
+                "activity-file", "garmin-connect", "lifting", "apple-health", "health-connect").distinct()
             val perSource = ids.map { it to repo.workouts(it, 0L, now) }
             add("Stored: " + perSource.joinToString("  ") { "${it.first}=${it.second.size}" })
             val latest = perSource.flatMap { it.second }.maxByOrNull { it.startTs }

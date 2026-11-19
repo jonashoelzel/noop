@@ -436,6 +436,375 @@
       "identity_sha256": "6aa52285ae46cf0ae75a690feee01765f9401825b6c9845c146163fdf5b2bb3e",
       "platform": "swift",
       "rationale": "A LOCAL binding inside the private v16 ECG decoder (#2847), not a static constant. The ledger's Swift rule treats any four-space `let` in a file-scope function as a candidate `static let`, which is how it finds file-scope constants without parsing, so a local in a top-level `private func` lands in the inventory. The Kotlin twin's equivalent is a local `val` in its own decodeWhoop5HistoricalV16, which the Kotlin rule never inventories because it matches `const val` only, and a Set-valued or object-valued local cannot be `const` in Kotlin at all. There is nothing to pair and nothing to change in either decoder."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::shouldAutoSync/4#1",
+      "identity_sha256": "cebe5506d8a103ea19b9c99093012b727ae107b849bf81cf96c12934d33d845a",
+      "platform": "swift",
+      "rationale": "Pure foreground auto-sync gate called by the Apple sync coordinator in the app target (Strand/Garmin/GarminSync.swift), factored into the package so swift test covers it. Android evaluates the same autoSync and interval conditions inline in com.noop.garmin.GarminSync.maybeAutoSync, which also launches the sync, so there is no pure Kotlin function to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::downsample/2#1",
+      "identity_sha256": "1cebf07fa9381c75282ceef85e0d0df8ea3df95fb0046a2347c385ddd8c7abd1",
+      "platform": "swift",
+      "rationale": "Thins an imported Garmin activity's timed track before the Apple ActivityStoreWriter keeps it in RouteStore (one point per GarminConnect.routeSpacingS). Android's ActivityFileImporter.importParsed stores only the polyline for an imported activity and keeps no timed track, so it has no downsampling step to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::downloadPath/1#1",
+      "identity_sha256": "1c7b313c1cf0990b3a9aecb82b0513ad47935b80dd33e2b978ae28053ffee372",
+      "platform": "swift",
+      "rationale": "Builds the Personal API download path for the Apple URLSession client (Strand/Garmin/GarminAPIClient.swift). The Android OkHttp client interpolates the same /download-service/files/activity/<id> path inline in com.noop.garmin.GarminApiClient.downloadFit, so there is no Kotlin function to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::failure/1#1",
+      "identity_sha256": "7c89dbd4bd4f582310b1e5e40b6b06a11dfaedf390824ba7629d35dccb6408e6",
+      "platform": "swift",
+      "rationale": "Maps an HTTP status to the typed GarminApi.Failure that the Apple app target turns into text. Android has no typed failure: com.noop.garmin.GarminApiClient maps the same 401/403, 429 and other-status classes straight to user text (errorMessage) and to a fatal flag (GarminApiException.isFatal), so no single Kotlin function has this contract."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::num/2#1",
+      "identity_sha256": "9d550ff31a777371156145ba27d6c7068e1d234765d310e090ed3a1b7a05e617",
+      "platform": "swift",
+      "rationale": "A local func nested inside GarminApi.parseStartTimeGMT that reads one fixed-width digit field of the hand-parsed timestamp. Its Kotlin twin GarminApiClient.parseGmt parses through java.time DateTimeFormatter instead, so there is no digit-field helper on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::daysFromCivil/3#1",
+      "identity_sha256": "5e676c9d5a87ec4f74ca1d4de131f0a32cd54235a8270c79e30a7e785603e4d7",
+      "platform": "swift",
+      "rationale": "Civil-date-to-epoch-days step of the hand-written, locale-free GarminApi.parseStartTimeGMT (Foundation date parsing would depend on the device calendar). Its Kotlin twin GarminApiClient.parseGmt uses java.time LocalDateTime.toEpochSecond, which needs no such helper."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::pageEndsWindow/2#1",
+      "identity_sha256": "0072c049687164db5bbac7e4248cc595dd0a0b26de094546a722705911ed2acd",
+      "platform": "swift",
+      "rationale": "Paging stop test used by the Apple sync coordinator in the app target (Strand/Garmin/GarminSync.swift), factored into the package so swift test covers it. Android performs the same oldest-start-before-window check inline in com.noop.garmin.GarminSyncEngine.run, so there is no Kotlin function to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/ActivityFileImporter.kt::roundHalfAwayExact/1#1",
+      "identity_sha256": "d400686d627717dc0fe6a91833793e7c273be02eb85a163ded9230568f3f04f9",
+      "platform": "kotlin",
+      "rationale": "Kotlin has no standard round-half-away-from-zero (Math.round rounds half up, kotlin.math.round rounds half to even), so this reimplements Swift's rounded(.toNearestOrAwayFromZero). The Swift side calls that standard-library rounding inline, so there is no Swift function to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::fromKey/1#1",
+      "identity_sha256": "c9e4900340c2d26d516eac06ddd21f942a4bd69e5a71a5b539eba912ecc6573b",
+      "platform": "kotlin",
+      "rationale": "Looks up a GarminFitExport.DeviceIdentity by its persisted key, defaulting to FORERUNNER_945. The Swift DeviceIdentity is a String-backed enum whose init?(rawValue:) is compiler-synthesized and used as `DeviceIdentity.init(rawValue:) ?? .default`, so no Swift function declaration exists to pair."
+    },
+    {
+      "type": "out_of_scope_twin",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/ActivityFileImporter.kt::isUsable/1#1",
+      "identity_sha256": "ea1e56f67a5b90b0c5c0c4e1f64e9471cd806390942ac22f148d288bb56e06e0",
+      "platform": "kotlin",
+      "rationale": "The Swift callers apply the same usability bar inline (`activity.durationS` present and > 0) before ActivityStoreWriter.write, in the excluded app layer: DataSourcesView.importActivityFile and the Garmin sync in Strand/Garmin/GarminSync.swift. This records the role twin only.",
+      "twin_path": "Strand/Screens/DataSourcesView.swift"
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::sourceId",
+      "identity_sha256": "362fe44a8572d1c98d6aabe445fd6fc75202282d3684a7e0349a3b8b644db0e4",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminConnect.SOURCE_ID, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::displayName",
+      "identity_sha256": "144820ee79c781aad0b36f213f0b07ace548ebd6bebf91ce3a2e6571604ffd96",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminConnect.DISPLAY_NAME, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::apiBase",
+      "identity_sha256": "44663e5cbd4d67f598b3e9e8b4541ee6a45131ca5357304f98187f8e5960159e",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminConnect.API_BASE, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::keyPageURL",
+      "identity_sha256": "5b1d92c8a2ce5d9e3343ff5f15881167a39b8fcc704a228e716b606fc9b70928",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminConnect.KEY_PAGE_URL, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::importPageURL",
+      "identity_sha256": "63ac6c5d20f0a9c912d9019f03f838c0cb64d91851df465393646abfde002887",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminConnect.IMPORT_PAGE_URL, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::exportDevice",
+      "identity_sha256": "8d150af2690f629f9a66236da3878d55824a4b2498f7c71dfe28edeb9fa2f35d",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSettings.KEY_EXPORT_DEVICE, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::autoSync",
+      "identity_sha256": "99d651c4b46f4717405d1932dcf7d9988abbb46ebc00f7bc63b749b752039002",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSettings.KEY_AUTO_SYNC, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::lastSyncAttemptTs",
+      "identity_sha256": "691f92b17258ef86c3addba4bcf25c6062932a77f22f1ecf0700cd604b1f4e8e",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSettings.KEY_LAST_SYNC_ATTEMPT_TS, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::lastSyncCursorTs",
+      "identity_sha256": "f4db30b92ec22acb7b8ce261d7486c58a5cb029ec3cf3c67a9d659482dad528b",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSettings.KEY_LAST_SYNC_CURSOR_TS, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::lastSyncSummary",
+      "identity_sha256": "76ae5ad692d0248eea1e06500aebb007f84b0d098878a2d235ddbcbadc857079",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSettings.KEY_LAST_SYNC_SUMMARY, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::pageSize",
+      "identity_sha256": "4085ce7c4c42bb40ad74a45c820f01a7e833a2456c327b1bb24b3b7810f9a08f",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSyncEngine.PAGE_SIZE, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::maxPages",
+      "identity_sha256": "f28e74d78d19586c9922a343059fe3389a068177cf56585f498f68bc41331171",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSyncEngine.MAX_PAGES, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::autoSyncIntervalS",
+      "identity_sha256": "4a8e13398a49bd5a9f33b3621e7e59b29218aefcef66b82ba25b7afae6e9b960",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminSync.AUTO_SYNC_INTERVAL_S, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::maxDownloadBytes",
+      "identity_sha256": "b4d0145934f54f87f53faa671a1d7d9aece3dc01e16dfb6841f9f9d0c07c0ee8",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminApiClient.MAX_DOWNLOAD_BYTES, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::tokenRefreshMarginS",
+      "identity_sha256": "27a34c5daff671f47227ca6e0d611fdf1c5b18c1759714878c362b0d2d8b5ace",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminApiClient.TOKEN_EARLY_REFRESH_S, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::sameStartToleranceS",
+      "identity_sha256": "e47538830f63f542aa7d5af06b21a45166c9fbfa1650f1c9dc8e6c2670dc0842",
+      "platform": "swift",
+      "rationale": "Shared Garmin Connect constant whose Kotlin twin is com.noop.garmin.GarminImportRule.SAME_START_TOLERANCE_S, outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::firstSyncDays",
+      "identity_sha256": "2fd36cc3238e15d3f2e08edf1c229ea7a27a457c2d696720dea00123ac8b4540",
+      "platform": "swift",
+      "rationale": "First-sync lookback in days. The Kotlin twin is com.noop.garmin.GarminSyncEngine.FIRST_SYNC_LOOKBACK_S (the same 30 days, held in seconds), outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::overlapDays",
+      "identity_sha256": "81b525d56a2519b8a3f6681091a3f21edb8295235e57ff94aa663ff83276efab",
+      "platform": "swift",
+      "rationale": "Cursor overlap in days. The Kotlin twin is com.noop.garmin.GarminSyncEngine.CURSOR_OVERLAP_S (the same 2 days, held in seconds), outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::tokenPath",
+      "identity_sha256": "28d67f4e87f1e4aeb99cde7047e11b38271d347b4c508691c44b063b371adfec",
+      "platform": "swift",
+      "rationale": "Personal API token path for the Apple URLSession client. The Android OkHttp client writes the same path inline in the request URL of com.noop.garmin.GarminApiClient.token, so there is no Kotlin constant to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::activityListPath",
+      "identity_sha256": "645978f6e21640afc1ca543db822b1c49564a2f780b746e9a0ebc878426aceac",
+      "platform": "swift",
+      "rationale": "Personal API activity-list path for the Apple URLSession client. The Android OkHttp client writes the same path inline in the request URL of com.noop.garmin.GarminApiClient.listActivities, so there is no Kotlin constant to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::keychainService",
+      "identity_sha256": "60eab5dd0f247e9aefc126df98485d40187d21131f5f7f63431748d40fcc0fa0",
+      "platform": "swift",
+      "rationale": "Apple Keychain service name for the Garmin Personal API key. Android has no Keychain; it keeps the key in EncryptedSharedPreferences (com.noop.garmin.GarminKeyStore, file garmin_secure), so there is no Kotlin twin."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::routeSpacingS",
+      "identity_sha256": "91778471de67d08949ed1f6c2501323237ba9a26ffe15239daa4fe7d8147b27e",
+      "platform": "swift",
+      "rationale": "Spacing for the timed route that the Apple ActivityStoreWriter keeps in RouteStore for a Garmin import (via GarminConnect.downsample). Android stores only the polyline for an imported activity and keeps no timed track, so there is no Kotlin twin."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminFitExporter.swift::enumT",
+      "identity_sha256": "bba0318ad6a5ab59aed5f1b1c13978deec32473350014ceb0543263613e49a0d",
+      "platform": "swift",
+      "rationale": "First binding of GarminFitExporter's one-line `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` FIT base-type table. The Kotlin twins are GarminFitExport's ENUM/U8/S32/U16/U32/U32Z, whose names do not normalize to the Swift ...T names, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::ENUM",
+      "identity_sha256": "c86ef48264be599a6edbc1aecfea27b8e1ff8f3c710a141b80515b5fe86bde55",
+      "platform": "kotlin",
+      "rationale": "FIT base-type byte used in GarminFitExport's definition messages. The Swift twin GarminFitExporter declares the same values in one multi-binding `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` line, whose ...T names do not normalize to these, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::U8",
+      "identity_sha256": "00377ac5aa893ac526ee495521af4d826032290fb528708522708e4ae69cc3a6",
+      "platform": "kotlin",
+      "rationale": "FIT base-type byte used in GarminFitExport's definition messages. The Swift twin GarminFitExporter declares the same values in one multi-binding `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` line, whose ...T names do not normalize to these, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::S32",
+      "identity_sha256": "ea9c55f6035ba8f114d2194898664729e27ca30bec6c871dba93cbc6aa9bd117",
+      "platform": "kotlin",
+      "rationale": "FIT base-type byte used in GarminFitExport's definition messages. The Swift twin GarminFitExporter declares the same values in one multi-binding `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` line, whose ...T names do not normalize to these, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::U16",
+      "identity_sha256": "eceee3748b2eea9a472a4b025f763bcb55939d81686515b1b08c4be1b5b43c77",
+      "platform": "kotlin",
+      "rationale": "FIT base-type byte used in GarminFitExport's definition messages. The Swift twin GarminFitExporter declares the same values in one multi-binding `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` line, whose ...T names do not normalize to these, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::U32",
+      "identity_sha256": "d365b8f814a405d2f2dabe533175c37cf6f07ba09920b4100babdb252ad38523",
+      "platform": "kotlin",
+      "rationale": "FIT base-type byte used in GarminFitExport's definition messages. The Swift twin GarminFitExporter declares the same values in one multi-binding `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` line, whose ...T names do not normalize to these, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::U32Z",
+      "identity_sha256": "14b5b30fcc9b2e131b71257d160183f4ef6b2b99ccc28b9d52cb70c04979b515",
+      "platform": "kotlin",
+      "rationale": "FIT base-type byte used in GarminFitExport's definition messages. The Swift twin GarminFitExporter declares the same values in one multi-binding `private static let enumT = 0x00, u8T = ..., u32zT = 0x8C` line, whose ...T names do not normalize to these, so the scanner cannot pair them."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::FIT_EPOCH",
+      "identity_sha256": "c0d3d370686d0606e2d1f3968a0301d7ca49a3c45412b14bfbcdced5d9007ac6",
+      "platform": "kotlin",
+      "rationale": "RouteExport.FIT_EPOCH is private to RouteExport, so GarminFitExport keeps its own copy of the same value. The Swift GarminFitExporter reads the internal RouteExporter.fitEpoch (already paired with RouteExport.FIT_EPOCH) and declares no constant of its own."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-constant",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/GarminFitExport.kt::SEMI_PER_DEG",
+      "identity_sha256": "c698b7038db1b58021dfb0a2b863d616e19f01d9fd0d35193725fe8afb5165f1",
+      "platform": "kotlin",
+      "rationale": "RouteExport.SEMI_PER_DEG is private to RouteExport, so GarminFitExport keeps its own copy of the same value. The Swift GarminFitExporter reads the internal RouteExporter.semiPerDeg (already paired with RouteExport.SEMI_PER_DEG) and declares no constant of its own."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-property",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::endTs@property#1",
+      "identity_sha256": "5dd721cd8ce75ec40a5f003d2079f9834070054626ea30b96134a5786811160a",
+      "platform": "swift",
+      "rationale": "Computed end of GarminApi.ActivitySummary. The Kotlin twin is the endTs getter of com.noop.garmin.GarminActivity (GarminApiClient.kt), outside the governed Kotlin roots (analytics, ingest, data, protocol, oura), so the scanner cannot pair it; the shared value is kept identical by hand."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-property",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminFitExporter.swift::manufacturer@property#1",
+      "identity_sha256": "332abd038d281cdf6629f2af1065a7f37764f5df088fb5c563ba5b60577373c0",
+      "platform": "swift",
+      "rationale": "Computed switch property of the Swift GarminFitExporter.DeviceIdentity enum. The Kotlin twin is the `manufacturer` constructor value of GarminFitExport.DeviceIdentity, which the property inventory does not list (enum constructor values) and whose file stem differs, so the scanner cannot pair it."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-property",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminFitExporter.swift::product@property#1",
+      "identity_sha256": "3f1e1d3d049a01488816fe42b549b1e7c4c78a33c77efd9f9e71f022a7e394f5",
+      "platform": "swift",
+      "rationale": "Computed switch property of the Swift GarminFitExporter.DeviceIdentity enum. The Kotlin twin is the `product` constructor value of GarminFitExport.DeviceIdentity, which the property inventory does not list (enum constructor values) and whose file stem differs, so the scanner cannot pair it."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-property",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminFitExporter.swift::serial@property#1",
+      "identity_sha256": "d7155695e8c867ae9f8d20ebd839f7e248577537251f1c098961ece62a894451",
+      "platform": "swift",
+      "rationale": "Computed switch property of the Swift GarminFitExporter.DeviceIdentity enum. The Kotlin twin is the `serial` constructor value of GarminFitExport.DeviceIdentity, which the property inventory does not list (enum constructor values) and whose file stem differs, so the scanner cannot pair it."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-property",
+      "identity": "swift\u0000Packages/StrandImport/Sources/StrandImport/GarminFitExporter.swift::softwareVersion@property#1",
+      "identity_sha256": "738dd4d8e2ca0316f49c2887eaee4333f90c2c602aeaa56d7b3ef07a2298b054",
+      "platform": "swift",
+      "rationale": "Computed switch property of the Swift GarminFitExporter.DeviceIdentity enum. The Kotlin twin is the `softwareVersion` constructor value of GarminFitExport.DeviceIdentity, which the property inventory does not list (enum constructor values) and whose file stem differs, so the scanner cannot pair it."
     }
   ]
 }

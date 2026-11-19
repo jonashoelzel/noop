@@ -82,6 +82,21 @@ public struct ActivityFile: Sendable, Equatable {
     /// carried BOTH a timestamp and a valid HR appear here (a sample with no time can't key into the
     /// (deviceId, ts) HR store), so `hrSamples.count <= hrSampleCount` in general.
     public var hrSamples: [ActivityHRSample]
+    /// Garmin `total_training_effect` (session field 24), 0.0–5.0. nil when the file did not carry it.
+    public var trainingEffectAerobic: Double?
+    /// Garmin `total_anaerobic_training_effect` (session field 137), 0.0–5.0. nil when absent.
+    public var trainingEffectAnaerobic: Double?
+    /// Garmin `training_load_peak` (session field 168), the device's own training-load figure for the
+    /// activity. Reference only: NOOP never feeds it into Effort. nil when absent.
+    public var trainingLoad: Double?
+    /// Session average power in watts (session field 20). nil when the file carried no power.
+    public var avgPowerW: Int?
+    /// Session average cadence (session field 18; rpm for rides, strides/min for runs). nil when absent.
+    public var avgCadence: Int?
+    /// The track with each fix's own time (and altitude when present), for stores that keep timed
+    /// points (Apple `RouteStore`). Only samples that carried BOTH a time and a valid coordinate. FIT
+    /// only; GPX/TCX leave it empty and keep `route`.
+    public var timedRoute: [TimedRoutePoint]
 
     public init(
         kind: Kind,
@@ -97,7 +112,13 @@ public struct ActivityFile: Sendable, Equatable {
         gpsPointCount: Int = 0,
         hrSampleCount: Int = 0,
         route: [RoutePoint] = [],
-        hrSamples: [ActivityHRSample] = []
+        hrSamples: [ActivityHRSample] = [],
+        trainingEffectAerobic: Double? = nil,
+        trainingEffectAnaerobic: Double? = nil,
+        trainingLoad: Double? = nil,
+        avgPowerW: Int? = nil,
+        avgCadence: Int? = nil,
+        timedRoute: [TimedRoutePoint] = []
     ) {
         self.kind = kind
         self.start = start
@@ -113,6 +134,12 @@ public struct ActivityFile: Sendable, Equatable {
         self.hrSampleCount = hrSampleCount
         self.route = route
         self.hrSamples = hrSamples
+        self.trainingEffectAerobic = trainingEffectAerobic
+        self.trainingEffectAnaerobic = trainingEffectAnaerobic
+        self.trainingLoad = trainingLoad
+        self.avgPowerW = avgPowerW
+        self.avgCadence = avgCadence
+        self.timedRoute = timedRoute
     }
 
     /// Duration in seconds, or nil when start == end (no real interval to claim).
@@ -123,6 +150,11 @@ public struct ActivityFile: Sendable, Equatable {
 
     /// Honest one-line note for the workout row, e.g.
     /// "Imported GPX · 8.2 km · 412 GPS points · 1,840 HR samples". Only states what's actually present.
+    ///
+    /// A Garmin file adds, each only when present and in this order: "Training Effect 5.0 aerobic",
+    /// "3.1 anaerobic" (or "Training Effect 3.1 anaerobic" when the aerobic figure is absent),
+    /// "load 404" and "avg 210 W". Training Effect has one decimal, load is an integer rounded half away
+    /// from zero. Locale-free on purpose: the Kotlin twin must produce the identical string.
     public func importNote() -> String {
         var parts: [String] = ["Imported \(kind.rawValue.uppercased())"]
         if let d = distanceM, d > 0 {
@@ -131,7 +163,43 @@ public struct ActivityFile: Sendable, Equatable {
         if gpsPointCount > 0 { parts.append("\(gpsPointCount) GPS points") }
         if hrSampleCount > 0 { parts.append("\(hrSampleCount) HR samples") }
         if let steps, steps > 0 { parts.append("\(steps) steps") }
+        if let aerobic = trainingEffectAerobic {
+            parts.append("Training Effect \(Self.oneDecimal(aerobic)) aerobic")
+            if let anaerobic = trainingEffectAnaerobic { parts.append("\(Self.oneDecimal(anaerobic)) anaerobic") }
+        } else if let anaerobic = trainingEffectAnaerobic {
+            parts.append("Training Effect \(Self.oneDecimal(anaerobic)) anaerobic")
+        }
+        if let load = trainingLoad, load.isFinite {
+            parts.append("load \(Int(load.rounded(.toNearestOrAwayFromZero)))")
+        }
+        if let watts = avgPowerW { parts.append("avg \(watts) W") }
         return parts.joined(separator: " · ")
+    }
+
+    /// One decimal, half away from zero, with a "." separator whatever the device locale. Integer
+    /// arithmetic so the text never depends on a platform's float formatter.
+    /// Kotlin twin: `ActivityFileImporter.oneDecimal`.
+    static func oneDecimal(_ v: Double) -> String {
+        guard v.isFinite else { return "0.0" }
+        let tenths = Int((v * 10).rounded(.toNearestOrAwayFromZero))
+        let sign = tenths < 0 ? "-" : ""
+        let a = abs(tenths)
+        return "\(sign)\(a / 10).\(a % 10)"
+    }
+}
+
+/// One GPS fix with its own time: unix seconds, degrees, and metres above sea level when the record
+/// carried an altitude. The timed twin of `RoutePoint`.
+public struct TimedRoutePoint: Sendable, Equatable {
+    public var ts: Int
+    public var lat: Double
+    public var lon: Double
+    public var altM: Double?
+    public init(ts: Int, lat: Double, lon: Double, altM: Double? = nil) {
+        self.ts = ts
+        self.lat = lat
+        self.lon = lon
+        self.altM = altM
     }
 }
 

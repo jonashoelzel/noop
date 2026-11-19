@@ -64,6 +64,9 @@ struct WorkoutDetailView: View {
     /// Drives the GPX/FIT export chooser for the recorded route.
     @State private var showRouteExport = false
 
+    /// True while the "Send to Garmin Connect" FIT file is being built (fork feature).
+    @State private var garminExporting = false
+
     /// Steps over the session window for an on-foot sport (#398): the count plus whether it came from the
     /// strap's own counter (MG/5.0) or the phone pedometer (fallback for WHOOP 4.0 / not-yet-synced / CSV
     /// import). nil = not an on-foot sport, or no step source had data for the window.
@@ -92,6 +95,7 @@ struct WorkoutDetailView: View {
             if let strain = row.strain {
                 effortCard(strain: strain)
             }
+            garminCard
         }
         .toolbar {
             // A Done affordance for the sheet on both platforms (iOS gets the grabber too).
@@ -325,6 +329,57 @@ struct WorkoutDetailView: View {
         }
     }
 
+    // MARK: - Send to Garmin Connect (fork feature)
+
+    /// "Send to Garmin Connect": builds a full FIT activity (HR + timed route) and hands it to the share
+    /// sheet, for the user to upload on Garmin Connect's import page. Not offered for a row that came from
+    /// Garmin Connect, or for a row with neither heart rate nor a route. Shown once the detail has loaded so
+    /// it does not pop in and out while the HR curve is read.
+    @ViewBuilder private var garminCard: some View {
+        if loaded, GarminWorkoutExport.isOffered(source: row.source,
+                                                 hasHr: row.avgHr != nil || !hrPoints.isEmpty,
+                                                 hasRoute: route.count >= 2) {
+            VStack(alignment: .leading, spacing: NoopMetrics.gap) {
+                SectionHeader("Garmin Connect")
+                NoopCard(tint: StrandPalette.zone1) {
+                    VStack(alignment: .leading, spacing: NoopMetrics.cardInnerSpacing) {
+                        Button {
+                            sendToGarmin()
+                        } label: {
+                            Label(garminExporting ? "Preparing…" : "Send to Garmin Connect",
+                                  systemImage: "paperplane")
+                        }
+                        .buttonStyle(NoopButtonStyle(.primary, fullWidth: true))
+                        .disabled(garminExporting)
+                        Text("Upload this file at Garmin Connect → Import Data. Garmin Connect forwards it to Strava if you connected Strava there.")
+                            .font(StrandFont.footnote)
+                            .foregroundStyle(StrandPalette.textTertiary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        if let importPage = URL(string: GarminConnect.importPageURL) {
+                            Link(destination: importPage) {
+                                Label("Open the Garmin Connect import page", systemImage: "arrow.up.right.square")
+                                    .font(StrandFont.subhead)
+                            }
+                            .foregroundStyle(StrandPalette.accent)
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /// Build the Garmin FIT file off the main actor, then present the share sheet / Save panel.
+    @MainActor private func sendToGarmin() {
+        guard !garminExporting else { return }
+        garminExporting = true
+        let row = self.row
+        Task {
+            let url = await GarminWorkoutExport.buildFile(for: row, repo: repo)
+            garminExporting = false
+            if let url { FileExport.exportFile(at: url, suggestedName: url.lastPathComponent) }
+        }
+    }
+
     /// Write the route to a GPX/FIT file and hand it to the system share sheet (or a Save panel on macOS).
     /// Points are decoded lat/lon only (the stored polyline), so the exporter interpolates per-point times
     /// across the session window and carries the workout's summary (sport, distance, calories, HR).
@@ -385,7 +440,7 @@ struct WorkoutDetailView: View {
         // ("Imported from Apple Health") would be a NEW key, and nothing catches a missing entry: the i18n
         // audit checks locale coverage OF catalog entries, not that a `String(localized:)` literal has one.
         // It would have read English on every non-English device while the gate stayed green.
-        case .apple, .whoop, .lifting, .activityFile: return "Imported"
+        case .apple, .whoop, .lifting, .activityFile, .garmin: return "Imported"
         case .detected, .manual: return "Recorded on device"
         }
     }
@@ -395,6 +450,8 @@ struct WorkoutDetailView: View {
         // Same rule as the overline: both of these are existing catalog keys with all nine locales. The
         // imported line carries the privacy claim without the "recorded on your device" the original
         // string opens with, which is the part that was untrue for a route another app collected.
+        case .garmin:
+            return String(localized: "Imported from Garmin Connect. NOOP keeps its copy on your device.")
         case .apple, .whoop, .lifting, .activityFile:
             return String(localized: "This stays on your device. It is never uploaded, never synced, never shared.")
         case .detected, .manual:
@@ -589,6 +646,7 @@ struct WorkoutDetailView: View {
             case .manual:   return (String(localized: "Manual"), StrandPalette.statusWarning)
             case .lifting:  return (String(localized: "Lifting"), StrandPalette.zone2)
             case .activityFile: return (String(localized: "File"), StrandPalette.metricAmber)
+            case .garmin:   return ("Garmin", StrandPalette.zone1)
             }
         }()
         return SourceBadge("\(label)", tint: tint)

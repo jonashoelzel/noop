@@ -2873,4 +2873,27 @@
     <string name="raw_diag_ecg_probe_running">Auf diesem Strap läuft möglicherweise noch eine Aufzeichnung. Das Ergebnis steht im Strap-Log.</string>
     <string name="today_customize_live_session_availability">Erscheint heute, wenn Live Sessions in den Einstellungen aktiviert sind oder eine Session aktiv ist.</string>
     <string name="l10n_app_changelog_today_your_way_heart_rate_any_5e1308b3">Today nach Ihren Wünschen, Herzfrequenz für jede App und Italienisch</string>
+    <string name="garmin_card_explanation">Importiert Aktivitäten aus Garmin Connect (zum Beispiel deine Edge-Fahrten) über Garmins offizielle Personal API und lässt dich NOOP-Workouts an Garmin Connect senden.</string>
+    <string name="garmin_no_key">Kein API-Schlüssel</string>
+    <string name="garmin_key_saved">Schlüssel gespeichert</string>
+    <string name="garmin_api_key_label">Personal-API-Schlüssel</string>
+    <string name="garmin_save_key">Schlüssel speichern</string>
+    <string name="garmin_remove_key">Schlüssel entfernen</string>
+    <string name="garmin_key_save_failed">Der Schlüssel konnte nicht gespeichert werden.</string>
+    <string name="garmin_create_key_link">Personal-API-Schlüssel erstellen</string>
+    <string name="garmin_auto_import">Automatisch importieren</string>
+    <string name="garmin_auto_import_detail">Prüft Garmin Connect, wenn du NOOP öffnest, höchstens einmal pro Stunde.</string>
+    <string name="garmin_sync_now">Jetzt synchronisieren</string>
+    <string name="garmin_syncing">Synchronisiere…</string>
+    <string name="garmin_never_synced">Noch nicht synchronisiert</string>
+    <string name="garmin_status_line">Letzte Synchronisierung %1$s · %2$s</string>
+    <string name="garmin_export_identity_label">Exportierte Dateien geben sich aus als</string>
+    <string name="garmin_identity_forerunner945">Forerunner 945 (empfohlen: Garmin vergibt Abzeichen)</string>
+    <string name="garmin_identity_noop">NOOP (kein Garmin-Gerät)</string>
+    <string name="garmin_export_identity_help">Garmin Connect vergibt Abzeichen nur für Dateien von einem Garmin-Gerät.</string>
+    <string name="garmin_send_title">An Garmin Connect senden</string>
+    <string name="garmin_send_help">Lade diese Datei in Garmin Connect unter → Daten importieren hoch. Garmin Connect leitet sie an Strava weiter, wenn du Strava dort verbunden hast.</string>
+    <string name="garmin_send_file">FIT-Datei teilen</string>
+    <string name="garmin_open_import_page">Daten importieren öffnen</string>
+    <string name="garmin_send_failed">Die Garmin-Datei konnte nicht erstellt werden: %1$s</string>
 </resources>

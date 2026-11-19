@@ -57,6 +57,7 @@ these are features, not a count of individual requests or destinations.
 | Oura history import / opt-in macOS, iOS build (§1.1b) | Compiled out by default; user starts authorization/import | OAuth credentials, authorization/refresh tokens and history query parameters; no existing NOOP health data | `cloud.ouraring.com`, `api.ouraring.com` |
 | Update check / macOS, iOS, Android (§1.1c) | Automatic check **on by default**, at most daily after onboarding/Terms; manual check on tap | Public release `GET`; no health data or app-added user/account identifier | `api.github.com` |
 | Self-hosted push / Android (§1.1d) | Experimental, **off by default**; configured export after offload/launch or on tap; explicit connection test | Bearer authentication; capability `GET`; versioned health batches with local installation/device IDs on export | User-owned HTTP(S) endpoint |
+| Garmin Connect import / macOS, iOS, Android (§1.1e, fork) | **Off until the user saves a Personal API key**; then on "Sync now" and at most hourly when the app comes to the foreground (auto-import can be switched off) | The Personal API key (to obtain a bearer token), the bearer token, and activity-list/download requests; no NOOP health data | `personal.connectapi.garmin.com` |
 
 **Platform services are a separate boundary.** Apple's workout route view uses `MKMapView`
 (`Strand/Screens/WorkoutDetailView.swift`), which can load map data for the displayed region.
@@ -65,12 +66,12 @@ Opening a web link hands it to a browser; Apple Health/Health Connect and sidelo
 own network and sharing settings. This inventory does not promise those services are offline.
 
 For ordinary strap collection without NOOP's direct HTTP requests: turn off **Check automatically**
-in Settings → About, leave the AI Coach and self-hosted push unconfigured, use a default build
+in Settings → About, leave the AI Coach, self-hosted push and the Garmin Connect key unconfigured, use a default build
 without the Oura cloud import, and do not tap the manual update check. This does not disable
 platform-service traffic such as the route map.
 
-Networking clients live in the app targets: `Strand/AI/`, `Strand/Oura/`, `Strand/System/UpdateChecker.swift`,
-and Android's `ai/`, `update/` and `push/` packages. The biometric pipeline and Swift packages under
+Networking clients live in the app targets: `Strand/AI/`, `Strand/Oura/`, `Strand/Garmin/`,
+`Strand/System/UpdateChecker.swift`, and Android's `ai/`, `update/`, `push/` and `garmin/` packages. The biometric pipeline and Swift packages under
 `Packages/` do not make runtime network requests; shared parsers such as `SseDeltas` only process
 already-received text. Android's Oura support is local BLE, with no equivalent to the cloud import.
 
@@ -213,6 +214,30 @@ not a NOOP cloud, account, restore path, or two-way sync:
 
 The repository ships the Android client and protocol document, not a server. The feature remains
 Experimental and default-off under the boundary in [`SCOPE.md`](SCOPE.md).
+
+### 1.1e Garmin Connect import (fork feature, off until a key is saved)
+
+This fork ([jonashoelzel/noop](https://github.com/jonashoelzel/noop)) adds a Garmin Connect
+integration that upstream NOOP does not have. See [`GARMIN.md`](GARMIN.md) for setup.
+
+- **Off until configured.** Nothing talks to Garmin until the user saves a Garmin Connect
+  **Personal API key** (created by the user in Garmin Connect). The key is stored in the Keychain
+  (Apple) or in `EncryptedSharedPreferences` (Android) and is never logged or displayed.
+- **What is sent.** The key is exchanged for a short-lived bearer token at Garmin's Personal API;
+  the token then authenticates read-only requests: the activity list and the original FIT file of
+  activities NOOP does not have yet. No NOOP health data is uploaded by this path.
+- **When.** On **Sync now**, and automatically at most once an hour when the app comes to the
+  foreground (switchable off). No background scheduling.
+- **What comes back.** Activity summaries and original FIT files, parsed by the same hardened
+  importer as a manually imported activity file (§3.2) and stored locally under the
+  `garmin-connect` source.
+- **Sending workouts to Garmin is not a network path.** "Send to Garmin Connect" only writes a FIT
+  file and opens the system share sheet; the user uploads it on Garmin Connect's web import page.
+  The file names the device identity the user picked in settings (a Garmin product by default, so
+  Garmin Connect credits badges), which is a label, not a measurement.
+- **Diagnostics.** The strap log records counts and an error class (for example "key rejected",
+  "HTTP 429") only, never the key, a token, an activity name or a health value.
+
 
 ### 1.2 The macOS sandbox (and what it means for the AI Coach and the Oura import)
 

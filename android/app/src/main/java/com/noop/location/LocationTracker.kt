@@ -12,8 +12,17 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-/** A raw GPS reading before filtering. */
-data class RawFix(val lat: Double, val lon: Double, val accuracyM: Float, val tMs: Long)
+/** A raw GPS reading before filtering. [altM] is metres above sea level when the fix had one. */
+data class RawFix(val lat: Double, val lon: Double, val accuracyM: Float, val tMs: Long, val altM: Double? = null)
+
+/**
+ * An ACCEPTED fix with its own time and altitude, what [LocationTracker.stream] emits. [tMs] is the fix's
+ * platform time (Location.time, unix ms). The timed twin of the bare [LatLng] the route polyline keeps,
+ * so a Garmin FIT export can carry real per-point times instead of spreading the polyline evenly.
+ */
+data class TimedFix(val lat: Double, val lon: Double, val altM: Double?, val tMs: Long) {
+    val latLng: LatLng get() = LatLng(lat, lon)
+}
 
 /**
  * Pure, stateful filter: drops low-accuracy fixes and physically-impossible jumps, returns the
@@ -54,12 +63,16 @@ class LocationTracker(private val context: Context) {
     // minDistanceM defaults to 0: let the platform deliver every time-based fix (every minIntervalMs)
     // so TrackFilter does the gating. A non-zero platform minDistance compounds with the accuracy gate
     // and suppressed fixes on a weak-signal run, contributing to the under-collected route (#324).
-    fun stream(minIntervalMs: Long = 2000, minDistanceM: Float = 0f): Flow<LatLng> = callbackFlow {
+    fun stream(minIntervalMs: Long = 2000, minDistanceM: Float = 0f): Flow<TimedFix> = callbackFlow {
         val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         val filter = TrackFilter()
         val listener = LocationListener { loc: Location ->
-            filter.accept(RawFix(loc.latitude, loc.longitude, if (loc.hasAccuracy()) loc.accuracy else 0f, loc.time))
-                ?.let { trySend(it) }
+            val raw = RawFix(
+                loc.latitude, loc.longitude, if (loc.hasAccuracy()) loc.accuracy else 0f, loc.time,
+                altM = if (loc.hasAltitude()) loc.altitude else null,
+            )
+            // TrackFilter's accept logic is unchanged; an accepted fix is re-emitted with its time + altitude.
+            if (filter.accept(raw) != null) trySend(TimedFix(raw.lat, raw.lon, raw.altM, raw.tMs))
         }
         try {
             lm.requestLocationUpdates(

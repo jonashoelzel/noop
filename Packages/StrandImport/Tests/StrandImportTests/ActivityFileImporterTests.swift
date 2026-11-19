@@ -413,7 +413,7 @@ final class ActivityFileImporterTests: XCTestCase {
 
 /// Assembles a minimal valid FIT byte stream: a 12-byte header (filled with the real ".FIT" signature
 /// and the correct dataSize at finish), then whatever definition/data records the test appends.
-private struct FitFixture {
+struct FitFixture {
     private var records: [UInt8] = []
 
     mutating func definition(local: Int, global: Int, fields: [(num: Int, size: Int, baseType: UInt8)]) {

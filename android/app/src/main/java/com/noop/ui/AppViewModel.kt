@@ -68,6 +68,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -1744,7 +1745,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         // The process-level session is authoritative for the route: it kept accumulating even if this
         // ViewModel was cleared mid-ride (screen off), so [w.track] may be stale. Stop it and take its
         // final track. A non-GPS workout has nothing in the session, so fall back to the local track. (#215)
-        val track = if (w.gpsEnabled) GpsSession.stop() else w.track
+        val finishedGps = if (w.gpsEnabled) GpsSession.finish() else null
+        val track = finishedGps?.track ?: w.track
+        // The same accepted fixes with their own time + altitude, kept beside the row for the Garmin FIT
+        // export (RouteTrackStore). Empty for a non-GPS workout.
+        val timedTrack = finishedGps?.timedTrack.orEmpty()
         val distanceM = if (w.gpsEnabled) RouteMath.totalMeters(track) else w.distanceM
         // If we promoted the foreground service ONLY to keep GPS tracking alive (the user hasn't opted
         // into the background connection), drop it now the route is finished — otherwise a lingering
@@ -1830,6 +1835,11 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         buzz(2, HapticPrefs.WORKOUT)
         viewModelScope.launch {
             val saved = runCatching { repository.upsertWorkouts(listOf(row)) }.isSuccess
+            if (saved && track.size >= 2 && timedTrack.isNotEmpty()) {
+                withContext(Dispatchers.IO) {
+                    com.noop.location.RouteTrackStore.save(appContext, row.startTs, row.sport, timedTrack)
+                }
+            }
             // #528: persist the live 1 Hz workout HR into hrSample so it can export to Health Connect
             // at full resolution NOW (the HR export keeps workout-window samples un-decimated), instead
             // of only after the next strap offload sync. IGNORE-on-conflict makes a later sync of the
@@ -2078,7 +2088,9 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
             // counts it, the load didn't). They're cardio (often GPS + HR), so they go through the strap
             // HR-fill below like the imported Apple sessions — a GPX with no HR borrows the strap's, while a
             // FIT that already carries HR is untouched (fill only fills nulls).
-            val activityFiles = repository.workouts(ActivityFileImporter.SOURCE_ID, 0L, now)
+            val activityFiles = repository.workouts(ActivityFileImporter.SOURCE_ID, 0L, now) +
+                // Garmin Connect imports: the same activity-file shape under their own source.
+                repository.workouts(com.noop.garmin.GarminConnect.SOURCE_ID, 0L, now)
             val markers = repository.dismissedDetectedUnion(deviceId)
             // Fill imported sessions' missing HR from strap samples (#77), same as before; detected /
             // manual rows already carry their own HR so they pass through unchanged. #961: also backfill a
@@ -2235,6 +2247,17 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    /** Measured HR for the Garmin FIT export of [row]: the row's own device first, then the same ids the
+     *  detail chart reads ([WhoopRepository.workoutHrDeviceIds]), deduped by second with earlier ids winning. */
+    suspend fun garminExportHr(row: WorkoutRow): List<HrSample> {
+        if (row.endTs <= row.startTs) return emptyList()
+        val ids = (listOf(row.deviceId) + WhoopRepository.workoutHrDeviceIds(row.source, row.deviceId, deviceId))
+            .distinct()
+        return runCatching {
+            repository.hrSamplesFor(ids, row.startTs, row.endTs, limit = com.noop.ingest.GarminFitExport.MAX_SECONDS.toInt() + 1)
+        }.getOrDefault(emptyList())
+    }
+
     /** Steps over a manual-workout window `[from, to]` from the strap's own `step_motion_counter@57`
      *  (#398): the shared wrap-aware `StepsCounter` delta-sum, then the per-user `stepTicksPerStep`
      *  calibration the daily total applies (#139, floor 0.5). null when no strap counter covers the window
@@ -2295,6 +2318,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteWorkout(row: WorkoutRow) {
         viewModelScope.launch {
             runCatching { repository.deleteWorkout(row) }
+            // The timed GPS sidecar of a recorded workout goes with it (no-op when none was stored).
+            withContext(Dispatchers.IO) {
+                com.noop.location.RouteTrackStore.delete(appContext, row.startTs, row.sport)
+            }
             loadWorkouts()
             // #1195 follow-up: a workout removed in NOOP is removed from Health Connect too, so a session
             // we wrote (manual or live) doesn't linger there after the user deletes it here. Opt-in, keyed
@@ -2599,6 +2626,12 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         // is enough for a personal health app.
         syncHealthConnectIfStale()
 
+        // Reload the Workouts list after every finished Garmin Connect sync (button or foreground), so an
+        // imported ride appears without leaving the screen. drop(1) skips the value current at subscribe.
+        viewModelScope.launch {
+            com.noop.garmin.GarminSync.completed.drop(1).collect { loadWorkouts() }
+        }
+
         // If a GPS workout is still tracking in the background (the screen was off and this VM was
         // recreated on reopen), rebuild its active-workout card from the process-level session. Placed
         // in THIS init — not the first one above — because it reads _activeWorkout, which is declared
@@ -2608,6 +2641,13 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         // snapshot so an OS kill mid-session can still be ended + saved (#529). Order matters: a live GPS
         // session wins; the non-GPS path only fills in when [_activeWorkout] is still null.
         rehydrateActiveNonGpsWorkout()
+    }
+
+    /** App came to the foreground: start a Garmin Connect sync when a key is saved, auto-sync is on and the
+     *  last attempt is an hour old ([com.noop.garmin.GarminSync.maybeAutoSync] checks all three). Workouts
+     *  reload when it finishes. */
+    fun onForegroundGarminSync() {
+        com.noop.garmin.GarminSync.maybeAutoSync(appContext)
     }
 
     /** Flip auto-sync. Persists and, on enable, kicks an immediate import; thereafter it catches up on

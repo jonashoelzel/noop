@@ -149,6 +149,7 @@ public enum RouteExporter {
     // MARK: - Timing / units
 
     /// Per-point Unix seconds, spread evenly across `[startTs, endTs]` (start for a single point).
+    /// Kotlin twin: `RouteExport.interpolatedTimes`.
     static func interpolatedTimes(_ n: Int, _ startTs: Int, _ endTs: Int) -> [Int] {
         if n <= 0 { return [] }
         if n == 1 { return [startTs] }
@@ -212,7 +213,7 @@ public enum RouteExporter {
     }
 
     /// FIT `sport` enum (session field 5). Round-trips through the importer's sport-name map.
-    private static func fitSport(_ canon: String) -> Int {
+    static func fitSport(_ canon: String) -> Int {
         switch canon {
         case "run": return 1
         case "cycle": return 2

@@ -67,6 +67,13 @@ object ActivityFileImporter {
      */
     data class HrPoint(val ts: Long, val bpm: Int)
 
+    /**
+     * One GPS fix that carried its own timestamp: unix seconds, degrees, and metres above sea level when
+     * the file had an elevation for it. Twin of the Swift `TimedRoutePoint`. Lets a platform that keeps a
+     * timed route (the Apple RouteStore) store real per-point times instead of spreading the polyline.
+     */
+    data class TimedPoint(val ts: Long, val lat: Double, val lon: Double, val altM: Double?)
+
     data class Activity(
         val kind: Kind,
         val startTs: Long,          // unix seconds, UTC
@@ -91,6 +98,21 @@ object ActivityFileImporter {
         // appear here (a sample with no time can't key into the (deviceId, ts) HR store), so in general
         // hrSamples.size <= hrSampleCount. Defaulted so the no-data build paths need no change.
         val hrSamples: List<HrPoint> = emptyList(),
+        // FIT session summaries a Garmin device writes (null when absent or FIT-invalid). Each mirrors the
+        // Swift ActivityFile field of the same name and only ever feeds the honest import note.
+        /** session 24 total_training_effect, /10. */
+        val trainingEffectAerobic: Double? = null,
+        /** session 137 total_anaerobic_training_effect, /10. */
+        val trainingEffectAnaerobic: Double? = null,
+        /** session 168 training_load_peak, /65536. */
+        val trainingLoad: Double? = null,
+        /** session 20 avg_power, watts. */
+        val avgPowerW: Int? = null,
+        /** session 18 avg_cadence, rpm (or strides per minute for a foot sport). */
+        val avgCadence: Int? = null,
+        /** FIT only: samples that carried BOTH a time and a valid position, in file order. GPX/TCX leave it
+         *  empty (parity with Swift); [route] is unchanged. */
+        val timedRoute: List<TimedPoint> = emptyList(),
     ) {
         val durationS: Double? get() = (endTs - startTs).takeIf { it > 0 }?.toDouble()
 
@@ -105,8 +127,45 @@ object ActivityFileImporter {
             if (gpsPointCount > 0) parts.add("$gpsPointCount GPS points")
             if (hrSampleCount > 0) parts.add("$hrSampleCount HR samples")
             if (steps != null && steps > 0) parts.add("$steps steps")
+            // Garmin session summaries, each only when present and in this order: "Training Effect 5.0
+            // aerobic", "3.1 anaerobic" (or "Training Effect 3.1 anaerobic" without an aerobic figure),
+            // "load 404", "avg 210 W". The Swift importNote builds the identical string.
+            val aerobic = trainingEffectAerobic
+            val anaerobic = trainingEffectAnaerobic
+            if (aerobic != null) {
+                parts.add("Training Effect ${oneDecimal(aerobic)} aerobic")
+                if (anaerobic != null) parts.add("${oneDecimal(anaerobic)} anaerobic")
+            } else if (anaerobic != null) {
+                parts.add("Training Effect ${oneDecimal(anaerobic)} anaerobic")
+            }
+            trainingLoad?.takeIf { it.isFinite() }?.let { parts.add("load ${roundHalfAwayExact(it)}") }
+            avgPowerW?.let { parts.add("avg $it W") }
             return parts.joinToString(" · ")
         }
+    }
+
+    /**
+     * One decimal, half away from zero, "." separator in every locale. Integer arithmetic on the tenths,
+     * byte-identical to the Swift `ActivityFile.oneDecimal`, so the note never depends on a platform's
+     * float formatter.
+     */
+    internal fun oneDecimal(v: Double): String {
+        if (!v.isFinite()) return "0.0"
+        val tenths = roundHalfAwayExact(v * 10)
+        val sign = if (tenths < 0) "-" else ""
+        val a = kotlin.math.abs(tenths)
+        return "$sign${a / 10}.${a % 10}"
+    }
+
+    /**
+     * Round half away from zero, exactly like Swift `rounded(.toNearestOrAwayFromZero)`. Compares the
+     * fraction instead of adding 0.5, which would round 0.49999999999999994 up.
+     */
+    internal fun roundHalfAwayExact(v: Double): Long {
+        val a = kotlin.math.abs(v)
+        val f = kotlin.math.floor(a)
+        val r = if (a - f >= 0.5) f + 1 else f
+        return (if (v < 0) -r else r).toLong()
     }
 
     data class Result(val activity: Activity?, val kind: Kind, val skipped: Int) {
@@ -136,6 +195,22 @@ object ActivityFileImporter {
             if (ts <= 0 || ts >= 4_102_444_800L) return@mapNotNull null
             HrPoint(ts, hr)
         }
+
+    /**
+     * The timed track: every sample that carried BOTH a timestamp and a valid position, in file order,
+     * with its elevation when present. Same epoch ceiling as [hrSamples]; capped at [MAX_POINTS].
+     */
+    internal fun timedRoute(samples: List<Sample>): List<TimedPoint> {
+        val out = ArrayList<TimedPoint>()
+        for (s in samples) {
+            val ts = s.timeS ?: continue
+            val p = s.point ?: continue
+            if (ts <= 0 || ts >= 4_102_444_800L) continue
+            if (out.size >= MAX_POINTS) break
+            out.add(TimedPoint(ts, p.lat, p.lon, s.elevationM?.takeIf { it.isFinite() }))
+        }
+        return out
+    }
 
     // MARK: - Format detection
 
@@ -186,22 +261,47 @@ object ActivityFileImporter {
             return ImportSummary.failure(SOURCE_LABEL, "Could not read the file: ${e.message ?: "unknown error"}")
         }
 
-        val result = parse(bytes, filename)
-        val activity = result.activity
-        val durationS = activity?.durationS
-        if (activity == null || durationS == null || durationS <= 0) {
+        val activity = parse(bytes, filename).activity
+        if (!isUsable(activity)) {
             return ImportSummary.failure(
                 SOURCE_LABEL,
                 "No usable activity found - point at a .gpx, .tcx or .fit workout file.",
             )
         }
+        return importParsed(activity!!, repo, deviceId = deviceId)
+    }
 
+    /** True when [activity] has a real interval, the bar [importParsed] requires. */
+    fun isUsable(activity: Activity?): Boolean {
+        val d = activity?.durationS ?: return false
+        return d > 0
+    }
+
+    /**
+     * Write one parsed [activity] to the store: the workout row (sport via [workoutSport], strain null,
+     * notes = [Activity.importNote], polyline route), its per-sample HR and the day's step total, all under
+     * [deviceId] / [source]. Shared by the file picker (source "activity-file") and the Garmin Connect sync
+     * (source "garmin-connect"), so both write identically. [deviceName] names the `device` row;
+     * [summaryLabel] heads the returned summary. The caller checks [isUsable] first and registers the
+     * source in the device registry.
+     *
+     * Swift twin: `ActivityStoreWriter.write` (app target). That one also registers the source and, for
+     * the Garmin target, keeps the timed route; here the caller registers and only the polyline is kept.
+     */
+    suspend fun importParsed(
+        activity: Activity,
+        repo: WhoopRepository,
+        deviceId: String = SOURCE_ID,
+        source: String = SOURCE_ID,
+        deviceName: String = "Workout files",
+        summaryLabel: String = SOURCE_LABEL,
+    ): ImportSummary {
         val row = WorkoutRow(
             deviceId = deviceId,
             startTs = activity.startTs,
             endTs = activity.endTs,
             sport = workoutSport(activity.sport),
-            source = SOURCE_ID,
+            source = source,
             durationS = activity.durationS,
             energyKcal = activity.energyKcal,
             avgHr = activity.avgHr,
@@ -215,18 +315,18 @@ object ActivityFileImporter {
             steps = activity.steps,                         // #1058: per-session steps, summed into the day below
         )
 
-        repo.upsertDevice(deviceId, name = "Workout files")
+        repo.upsertDevice(deviceId, name = deviceName)
         repo.upsertWorkouts(listOf(row))
 
-        // #137 (A): persist the ride's real per-sample HR under the activity-file source. The insert is
+        // #137 (A): persist the ride's real per-sample HR under the importing source. The insert is
         // keyed on (deviceId, ts) (OnConflict.REPLACE), so re-importing the same file is idempotent — an
         // identical ts overwrites, never duplicates. Skipped when the file carried no timestamped HR (a
-        // pure GPS track), leaving day Effort honestly dark. Registering activity-file as a `.fileImport`
-        // owner candidate (B1) happens in the UI caller (DataSourcesScreen), mirroring the Swift lane.
+        // pure GPS track), leaving day Effort honestly dark. Registering the source as a `.fileImport`
+        // owner candidate (B1) happens in the caller (DataSourcesScreen / GarminSync), mirroring Swift.
         if (activity.hrSamples.isNotEmpty()) {
             repo.insertHr(activity.hrSamples.map { HrSample(deviceId = deviceId, ts = it.ts, bpm = it.bpm) })
         }
-        // #1058: recompute the day's activity-file step total as the SUM over ALL that day's sessions
+        // #1058: recompute the day's step total for this source as the SUM over ALL that day's sessions
         // (each now carries its own steps), so a second file for the same day ADDS to the first instead
         // of clobbering it. Idempotent on re-import: the file's workout row (keyed on startTs+sport) is
         // replaced, not duplicated, so the re-summed total is unchanged. Only recompute when THIS file
@@ -249,7 +349,7 @@ object ActivityFileImporter {
         val counts = linkedMapOf("workouts" to 1)
         if (dayStepsWritten) counts["dailyMetric"] = 1
         return ImportSummary(
-            source = SOURCE_LABEL,
+            source = summaryLabel,
             counts = counts,
             firstDay = dayString(activity.startTs),
             lastDay = dayString(activity.endTs),
@@ -615,6 +715,11 @@ internal class FitDecoder(raw: ByteArray) {
     private var sessionAscent: Double? = null
     private var sessionAvgHr: Int? = null
     private var sessionMaxHr: Int? = null
+    private var sessionTeAerobic: Double? = null
+    private var sessionTeAnaerobic: Double? = null
+    private var sessionLoad: Double? = null
+    private var sessionAvgPower: Int? = null
+    private var sessionAvgCadence: Int? = null
 
     private var lapDistanceSum = 0.0
     private var lapCalorieSum = 0.0
@@ -716,16 +821,21 @@ internal class FitDecoder(raw: ByteArray) {
         var off = start
         var lat: Double? = null; var lon: Double? = null
         var ele: Double? = null; var hr: Int? = null; var time: Long? = null
+        var enhancedEle: Double? = null
         for (f in def.fields) {
             when (f.num) {
                 253 -> u(off, f.size, def.bigEndian)?.let { time = fitDate(it) }
                 0 -> s(off, f.size, def.bigEndian)?.let { lat = semicircles(it) }
                 1 -> s(off, f.size, def.bigEndian)?.let { lon = semicircles(it) }
                 2 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) ele = it.toDouble() / 5.0 - 500.0 }
-                3 -> u(off, f.size, def.bigEndian)?.let { hr = ActivityFileImporter.validHr(it.toDouble()) }
+                // enhanced_altitude (uint32, scale 5, offset 500): what current Garmin devices write
+                // instead of field 2. Used only when field 2 is absent or invalid.
+                78 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFFFFFL) enhancedEle = it.toDouble() / 5.0 - 500.0 }
+                3 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { hr = ActivityFileImporter.validHr(it.toDouble()) } // 0xFF = FIT invalid
             }
             off += f.size
         }
+        if (ele == null) ele = enhancedEle
         val point = ActivityFileImporter.validCoordinate(lat, lon)
         if (point == null && time == null && hr == null) { skipped++; return }
         if (samples.size >= ActivityFileImporter.MAX_POINTS) return
@@ -742,7 +852,7 @@ internal class FitDecoder(raw: ByteArray) {
                 11 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) lapCalorieSum += it.toDouble() }
                 10 -> u(off, f.size, def.bigEndian)?.let { validSteps(it, f.size)?.let { steps -> lapStepSum += steps } }
                 21 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) lapAscentSum += it.toDouble() }
-                16 -> u(off, f.size, def.bigEndian)?.let { v -> ActivityFileImporter.validHr(v.toDouble())?.let { lapMaxHr = maxOf(lapMaxHr ?: 0, it) } }
+                16 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { v -> ActivityFileImporter.validHr(v.toDouble())?.let { lapMaxHr = maxOf(lapMaxHr ?: 0, it) } }
             }
             off += f.size
         }
@@ -759,8 +869,13 @@ internal class FitDecoder(raw: ByteArray) {
                 11 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) sessionCalories = it.toDouble() }
                 10 -> u(off, f.size, def.bigEndian)?.let { sessionSteps = validSteps(it, f.size) }
                 22 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) sessionAscent = it.toDouble() }
-                16 -> u(off, f.size, def.bigEndian)?.let { sessionAvgHr = ActivityFileImporter.validHr(it.toDouble()) }
-                17 -> u(off, f.size, def.bigEndian)?.let { sessionMaxHr = ActivityFileImporter.validHr(it.toDouble()) }
+                16 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { sessionAvgHr = ActivityFileImporter.validHr(it.toDouble()) }
+                17 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { sessionMaxHr = ActivityFileImporter.validHr(it.toDouble()) }
+                24 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFL) sessionTeAerobic = it.toDouble() / 10.0 }
+                137 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFL) sessionTeAnaerobic = it.toDouble() / 10.0 }
+                168 -> s(off, f.size, def.bigEndian)?.let { if (it != 0x7FFFFFFFL) sessionLoad = it.toDouble() / 65536.0 }
+                20 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) sessionAvgPower = it.toInt() }
+                18 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFL) sessionAvgCadence = it.toInt() }
             }
             off += f.size
         }
@@ -874,6 +989,12 @@ internal class FitDecoder(raw: ByteArray) {
             // #137: the real per-record HR series, via the SHARED extractor so FIT persists a
             // byte-identical HR stream to the GPX/TCX paths (and the Swift twin).
             hrSamples = ActivityFileImporter.hrSamples(samples),
+            trainingEffectAerobic = sessionTeAerobic,
+            trainingEffectAnaerobic = sessionTeAnaerobic,
+            trainingLoad = sessionLoad,
+            avgPowerW = sessionAvgPower,
+            avgCadence = sessionAvgCadence,
+            timedRoute = ActivityFileImporter.timedRoute(samples),
         )
         return ActivityFileImporter.Result(activity, ActivityFileImporter.Kind.FIT, skipped)
     }

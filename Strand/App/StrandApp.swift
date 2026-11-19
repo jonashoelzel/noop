@@ -77,7 +77,12 @@ struct StrandApp: App {
                 // Single-param form (not the two-param `{ _, phase in }`) — that overload needs macOS 14,
                 // this target is macOS 13.
                 .onChange(of: scenePhase) { phase in
-                    if phase == .active { model.ble.requestSync(.foreground) }
+                    if phase == .active {
+                        model.ble.requestSync(.foreground)
+                        // Garmin Connect import (fork feature): only with a saved key, auto-import on, and
+                        // at most hourly; a no-op otherwise.
+                        GarminSync.shared.syncIfDue(model: model)
+                    }
                 }
         }
         .windowStyle(.hiddenTitleBar)

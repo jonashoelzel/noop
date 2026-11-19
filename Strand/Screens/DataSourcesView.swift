@@ -34,6 +34,8 @@ struct DataSourcesView: View {
     @State private var wearableImporting = false
     @State private var wearableSummary: String?
     @State private var wearableFailed = false
+    // Garmin Connect (fork feature): observed so the card's status pill follows a key save / remove.
+    @ObservedObject private var garminSync = GarminSync.shared
     #if OURA_CLOUD_IMPORT
     // Oura history import (compiled in ONLY with OURA_CLOUD_IMPORT): a one-time, user-initiated,
     // foreground OAuth + backfill of the user's own history over the Oura API, as an alternative to
@@ -97,12 +99,13 @@ struct DataSourcesView: View {
                 nutritionCard.staggeredAppear(index: 3)
                 liftingCard.staggeredAppear(index: 4)
                 activityFileCard.staggeredAppear(index: 5)
-                wearableCard.staggeredAppear(index: 6)
+                garminConnectCard.staggeredAppear(index: 6)
+                wearableCard.staggeredAppear(index: 7)
                 #if OURA_CLOUD_IMPORT
-                ouraCloudCard.staggeredAppear(index: 7)
+                ouraCloudCard.staggeredAppear(index: 8)
                 #endif
-                broadcastHrCard.staggeredAppear(index: 8)
-                liveCard.staggeredAppear(index: 9)
+                broadcastHrCard.staggeredAppear(index: 9)
+                liveCard.staggeredAppear(index: 10)
             }
         }
         .onAppear {
@@ -274,6 +277,19 @@ struct DataSourcesView: View {
                 Text(s).font(StrandFont.subhead)
                     .foregroundStyle(activityFileFailed ? StrandPalette.statusWarning : StrandPalette.statusPositive)
             }
+        }
+    }
+
+    /// Garmin Connect (fork feature): the opt-in Personal API import of Garmin activities, plus the device
+    /// identity "Send to Garmin Connect" files claim. The card body lives in `GarminConnectSettingsView`.
+    private var garminConnectCard: some View {
+        card(title: GarminConnect.displayName, icon: "arrow.triangle.2.circlepath.circle.fill",
+             tint: StrandPalette.zone1,
+             status: StatePill(garminSync.hasKey ? "Key saved" : "Off",
+                               tone: garminSync.hasKey ? .positive : .neutral,
+                               showsDot: garminSync.hasKey),
+             subtitle: String(localized: "Imports activities from Garmin Connect (for example your Edge rides) with Garmin's official Personal API, and lets you send NOOP workouts to Garmin Connect.")) {
+            GarminConnectSettingsView()
         }
     }
 
@@ -507,17 +523,8 @@ struct DataSourcesView: View {
     /// Parse a single GPX / TCX / FIT activity file and upsert it as one workout (source
     /// "activity-file"). The route polyline isn't persisted on macOS (the shared WorkoutRow has no route
     /// column), but distance / HR / energy / ascent and an honest "N GPS points · M HR samples" note are.
-    ///
-    /// #137: the imported ride's REAL per-sample HR is now ALSO persisted as an HR stream under the
-    /// `activity-file` deviceId, and `activity-file` is registered as an `.activityFile` device. Together
-    /// (A + B1) that lets a strap-less day's ride light the day Effort ring: the per-day owner resolver
-    /// (`IntelligenceEngine.resolveDayOwner`) treats `activity-file` as the LOWEST-ranked candidate
-    /// (priority 3, below whole-day imports at 2) and — being the only source with HR that day — picks it
-    /// as the day owner, so `dayHr` reads the ride's HR and Effort scores from it. On a day the user ALSO
-    /// wore the strap, the strap (priority 0/1) wins ownership and the imported HR is ignored for Effort;
-    /// on a day a whole-day WHOOP import (priority 2) has HR, that import wins over the ride too. The
-    /// workout row itself still stores `strain = nil` (we never fabricate a per-workout strain); the day
-    /// Effort is computed from the measured HR stream, exactly as it is for a worn strap.
+    /// The store writes (row, per-sample HR, day steps, device registration, #137) live in
+    /// `ActivityStoreWriter`, shared with the Garmin Connect import.
     private func importActivityFile(url: URL) {
         activityFileImporting = true
         activityFileSummary = nil
@@ -550,85 +557,11 @@ struct DataSourcesView: View {
                     return
                 }
                 let sport = ActivityFileImporter.workoutSport(from: activity.sport)
-                let row = WorkoutRow(
-                    startTs: Int(activity.start.timeIntervalSince1970),
-                    endTs: Int(activity.end.timeIntervalSince1970),
-                    sport: sport,
-                    source: ActivityFileImporter.sourceId,
-                    durationS: activity.durationS,
-                    energyKcal: activity.energyKcal,
-                    avgHr: activity.avgHr,
-                    maxHr: activity.maxHr,
-                    strain: nil,                         // never a fabricated cardiovascular strain
-                    distanceM: activity.distanceM,
-                    zonesJSON: nil,
-                    notes: activity.importNote(),
-                    steps: activity.steps                 // #1058: per-session steps, summed into the day below
-                )
-                try await store.upsertWorkouts([row], deviceId: ActivityFileImporter.sourceId)
-
-                // #137 (A): persist the ride's real per-sample HR under the activity-file source. The
-                // insert is keyed on (deviceId, ts), so re-importing the same file is idempotent (an
-                // identical ts overwrites, never duplicates). Skipped when the file carried no
-                // timestamped HR (a pure GPS track) — nothing to store, so day Effort stays honestly dark.
-                if !activity.hrSamples.isEmpty {
-                    let hr = activity.hrSamples.map { HRSample(ts: $0.ts, bpm: $0.bpm) }
-                    _ = try? await store.insert(Streams(hr: hr), deviceId: ActivityFileImporter.sourceId)
+                // Row, HR stream, day steps and the `activity-file` device registration: the shared writer
+                // the Garmin Connect import also uses (see `ActivityStoreWriter` for the #137 rationale).
+                try await ActivityStoreWriter.write(activity, target: .activityFile, store: store) {
+                    model.registerDevice($0, makeActive: false)
                 }
-                // #1058: recompute the day's activity-file step total as the SUM over ALL that day's
-                // sessions (now that each carries its own steps), so a second file for the same day ADDS
-                // to the first instead of clobbering it. Idempotent on re-import: the file's workout row
-                // (keyed on startTs+sport) is replaced, not duplicated, so the re-summed total is unchanged.
-                // Only recompute when THIS file contributed steps (a foot sport); a cycling import leaves
-                // the day's step total untouched.
-                if (activity.steps ?? 0) > 0 {
-                    let dayStart = Calendar.current.startOfDay(for: activity.start)
-                    let dayEnd = Calendar.current.date(byAdding: .day, value: 1, to: dayStart)
-                        ?? dayStart.addingTimeInterval(86_400)
-                    let daySteps = (try? await store.sumWorkoutSteps(
-                        deviceId: ActivityFileImporter.sourceId,
-                        from: Int(dayStart.timeIntervalSince1970),
-                        to: Int(dayEnd.timeIntervalSince1970))) ?? 0
-                    if daySteps > 0 {
-                        let metric = DailyMetric(
-                            day: Repository.localDayKey(activity.start),
-                            totalSleepMin: nil,
-                            efficiency: nil,
-                            deepMin: nil,
-                            remMin: nil,
-                            lightMin: nil,
-                            disturbances: nil,
-                            restingHr: nil,
-                            avgHrv: nil,
-                            recovery: nil,
-                            strain: nil,
-                            exerciseCount: nil,
-                            steps: daySteps
-                        )
-                        try? await store.upsertDailyMetrics([metric], deviceId: ActivityFileImporter.sourceId)
-                    }
-                }
-
-                // #137 (B1): register `activity-file` as an `.activityFile` device so the per-day owner
-                // resolver can pick it as the day owner on a strap-less day (it iterates the registry's
-                // paired devices; an unregistered source is invisible to it). The distinct kind ranks it
-                // at priority 3 — below whole-day imports (2) — so a full-day WHOOP import always wins a
-                // day it has HR for. status `.paired`, NEVER `.active`, so it can never displace the live
-                // strap as the active device; capability `.hr` marks what the source CAN provide (presence
-                // per-day is still gated by an actual HR read in the resolver). Idempotent, makeActive: false.
-                model.registerDevice(
-                    PairedDevice(
-                        id: ActivityFileImporter.sourceId,
-                        brand: "Workout files",
-                        model: "",
-                        sourceKind: .activityFile,
-                        capabilities: [.hr],
-                        status: .paired,
-                        addedAt: Int(Date().timeIntervalSince1970),
-                        lastSeenAt: Int(Date().timeIntervalSince1970)
-                    ),
-                    makeActive: false
-                )
 
                 await repo.refresh()
                 activityFileSummary = ActivityFileImporter.summaryText(activity)

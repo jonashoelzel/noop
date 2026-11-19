@@ -29,6 +29,8 @@ object GpsSession {
         val startMs: Long = 0L,
         val sportName: String = "",
         val track: List<LatLng> = emptyList(),
+        /** The same accepted fixes as [track], with their own time and altitude (Garmin FIT export). */
+        val timedTrack: List<TimedFix> = emptyList(),
         val distanceM: Double = 0.0,
         val paceSecPerKm: Double? = null,
         val paused: Boolean = false,
@@ -56,13 +58,16 @@ object GpsSession {
     }
 
     /** Fold one accepted fix into the route, recomputing distance + pace. No-op when not active. */
-    fun append(pt: LatLng) {
+    fun append(fix: TimedFix) {
         val s = _state.value
         if (!s.active || s.paused) return
-        val track = s.track + pt
+        val track = s.track + fix.latLng
         val dist = RouteMath.totalMeters(track)
         val secs = (System.currentTimeMillis() - s.startMs - s.pausedDurationMs) / 1000.0
-        _state.value = s.copy(track = track, distanceM = dist, paceSecPerKm = RouteMath.paceSecPerKm(dist, secs))
+        _state.value = s.copy(
+            track = track, timedTrack = s.timedTrack + fix,
+            distanceM = dist, paceSecPerKm = RouteMath.paceSecPerKm(dist, secs),
+        )
         // Workouts & GPS test mode: one GPS-fix-progress line per accepted fix, only when the service wired a
         // sink (the WORKOUTS gate was on). The LocationTracker pre-filters UPSTREAM, so the raw pre-filter
         // count is not available at this seam (every fix here is already accepted). Pass rawFixes = null so
@@ -77,10 +82,13 @@ object GpsSession {
     }
 
     /** End the route and clear it. Returns the final accumulated track for the saved WorkoutRow. */
-    fun stop(): List<LatLng> {
-        val track = _state.value.track
+    fun stop(): List<LatLng> = finish().track
+
+    /** End the route and clear it, returning the whole final state (polyline track AND timed track). */
+    fun finish(): State {
+        val s = _state.value
         _state.value = State()
-        return track
+        return s
     }
 
     fun pause() {
