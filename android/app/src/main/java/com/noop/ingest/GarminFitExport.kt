@@ -260,15 +260,20 @@ object GarminFitExport {
 
     private data class F(val num: Int, val size: Int, val baseType: Int)
 
+    /** A little-endian FIT definition message. Swift twin: `GarminFitExporter.defn`. */
     private fun ByteArrayOutputStream.defn(local: Int, global: Int, fields: List<F>) {
         u8(0x40 or (local and 0x0F)); u8(0); u8(0); u16(global); u8(fields.size)
         for (f in fields) { u8(f.num); u8(f.size); u8(f.baseType) }
     }
+    /** One byte. Swift twin: `GarminFitExporter.u8`. */
     private fun ByteArrayOutputStream.u8(v: Int) = write(v and 0xFF)
+    /** Little-endian uint16. Swift twin: `GarminFitExporter.u16`. */
     private fun ByteArrayOutputStream.u16(v: Int) { write(v and 0xFF); write((v ushr 8) and 0xFF) }
+    /** Little-endian uint32. Swift twin: `GarminFitExporter.u32`. */
     private fun ByteArrayOutputStream.u32(v: Long) {
         write((v and 0xFF).toInt()); write(((v ushr 8) and 0xFF).toInt())
         write(((v ushr 16) and 0xFF).toInt()); write(((v ushr 24) and 0xFF).toInt())
     }
+    /** Little-endian sint32 (two's complement). Swift twin: `GarminFitExporter.s32`. */
     private fun ByteArrayOutputStream.s32(v: Int) = u32(v.toLong() and 0xFFFFFFFFL)
 }

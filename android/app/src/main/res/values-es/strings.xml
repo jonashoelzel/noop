@@ -2860,4 +2860,27 @@
     <string name="raw_diag_ecg_probe_running">Puede que siga activa una captura en esta correa. El veredicto se registra en el strap log.</string>
     <string name="today_customize_live_session_availability">Aparece hoy si Live Sessions está activado en Ajustes o hay una sesión activa.</string>
     <string name="l10n_app_changelog_today_your_way_heart_rate_any_5e1308b3">Hoy a tu manera, frecuencia cardíaca para cualquier aplicación e italiano</string>
+    <string name="garmin_card_explanation">Importa actividades de Garmin Connect (por ejemplo, tus salidas con Edge) mediante la Personal API oficial de Garmin y te permite enviar entrenamientos de NOOP a Garmin Connect.</string>
+    <string name="garmin_no_key">Sin clave de API</string>
+    <string name="garmin_key_saved">Clave guardada</string>
+    <string name="garmin_api_key_label">Clave de la Personal API</string>
+    <string name="garmin_save_key">Guardar clave</string>
+    <string name="garmin_remove_key">Eliminar clave</string>
+    <string name="garmin_key_save_failed">No se pudo guardar la clave.</string>
+    <string name="garmin_create_key_link">Crear una clave de la Personal API</string>
+    <string name="garmin_auto_import">Importar automáticamente</string>
+    <string name="garmin_auto_import_detail">Consulta Garmin Connect al abrir NOOP, como máximo una vez por hora.</string>
+    <string name="garmin_sync_now">Sincronizar ahora</string>
+    <string name="garmin_syncing">Sincronizando…</string>
+    <string name="garmin_never_synced">Aún no sincronizado</string>
+    <string name="garmin_status_line">Última sincronización %1$s · %2$s</string>
+    <string name="garmin_export_identity_label">Los archivos exportados se identifican como</string>
+    <string name="garmin_identity_forerunner945">Forerunner 945 (recomendado: Garmin cuenta las insignias)</string>
+    <string name="garmin_identity_noop">NOOP (sin dispositivo Garmin)</string>
+    <string name="garmin_export_identity_help">Garmin Connect solo otorga insignias a archivos de un dispositivo Garmin.</string>
+    <string name="garmin_send_title">Enviar a Garmin Connect</string>
+    <string name="garmin_send_help">Sube este archivo en Garmin Connect → Importar datos. Garmin Connect lo reenvía a Strava si conectaste Strava allí.</string>
+    <string name="garmin_send_file">Compartir archivo FIT</string>
+    <string name="garmin_open_import_page">Abrir Importar datos</string>
+    <string name="garmin_send_failed">No se pudo crear el archivo de Garmin: %1$s</string>
 </resources>

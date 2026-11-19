@@ -1591,6 +1591,9 @@ fun NoopRoot() {
         val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
             if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
                 appViewModel.ble.onForeground()
+                // Garmin Connect catch-up import: a no-op unless a key is saved, auto-sync is on and the
+                // last attempt is at least an hour old.
+                appViewModel.onForegroundGarminSync()
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)

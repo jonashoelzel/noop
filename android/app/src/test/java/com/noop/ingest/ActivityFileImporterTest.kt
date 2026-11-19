@@ -421,6 +421,148 @@ class ActivityFileImporterTest {
             )
         }
     }
+
+    // MARK: - Garmin session summaries + enhanced altitude + timed route (fork Garmin integration)
+
+    /** A cycling session carrying Training Effect, training load, power and cadence, plus two records. */
+    private fun garminSessionFit(
+        teAerobic: Int = 50, teAnaerobic: Int = 31, loadRaw: Int = 26_458_276, power: Int = 210, cadence: Int = 88,
+    ): ByteArray {
+        val fit = FitFixture()
+        fit.definition(0, 18, listOf(
+            Triple(2, 4, 0x86), Triple(5, 1, 0x00), Triple(7, 4, 0x86), Triple(9, 4, 0x86),
+            Triple(18, 1, 0x02), Triple(20, 2, 0x84), Triple(24, 1, 0x02), Triple(137, 1, 0x02),
+            Triple(168, 4, 0x85),
+        ))
+        fit.dataHeader(0)
+        fit.u32(200_000L)     // start_time
+        fit.u8(2)             // sport = cycling
+        fit.u32(3_600_000L)   // total_elapsed_time 3600 s
+        fit.u32(3_000_000L)   // 30 km
+        fit.u8(cadence)       // avg_cadence
+        fit.u16(power)        // avg_power
+        fit.u8(teAerobic)     // total_training_effect x10
+        fit.u8(teAnaerobic)   // total_anaerobic_training_effect x10
+        fit.i32(loadRaw)      // training_load_peak x65536 (26458276 / 65536 = 403.72)
+        // Records with enhanced_altitude (78) only, the way an Edge writes them.
+        fit.definition(1, 20, listOf(
+            Triple(253, 4, 0x86), Triple(0, 4, 0x85), Triple(1, 4, 0x85), Triple(78, 4, 0x86),
+        ))
+        val semi = 180.0 / 2_147_483_648.0
+        for (k in 0 until 2) {
+            fit.dataHeader(1)
+            fit.u32(200_000L + k * 5L)
+            fit.i32(Math.round((51.0 + k * 0.001) / semi).toInt())
+            fit.i32(Math.round(13.7 / semi).toInt())
+            fit.u32(((112.4 + k) + 500.0).times(5.0).let { Math.round(it) })
+        }
+        return fit.finish()
+    }
+
+    @Test
+    fun fitDecodesGarminSessionSummaries() {
+        val a = ActivityFileImporter.parse(garminSessionFit(), "ride.fit").activity!!
+        assertEquals("Cycling", a.sport)
+        assertEquals(5.0, a.trainingEffectAerobic!!, 1e-9)
+        assertEquals(3.1, a.trainingEffectAnaerobic!!, 1e-9)
+        assertEquals(403.72, a.trainingLoad!!, 0.005)
+        assertEquals(210, a.avgPowerW)
+        assertEquals(88, a.avgCadence)
+    }
+
+    @Test
+    fun fitInvalidSessionSummariesStayNull() {
+        val a = ActivityFileImporter.parse(
+            garminSessionFit(teAerobic = 0xFF, teAnaerobic = 0xFF, loadRaw = 0x7FFFFFFF, power = 0xFFFF, cadence = 0xFF),
+            "ride.fit",
+        ).activity!!
+        assertNull(a.trainingEffectAerobic)
+        assertNull(a.trainingEffectAnaerobic)
+        assertNull(a.trainingLoad)
+        assertNull(a.avgPowerW)
+        assertNull(a.avgCadence)
+        assertEquals("Imported FIT · 30 km · 2 GPS points", a.importNote())
+    }
+
+    @Test
+    fun importNoteAppendsGarminSummariesWithSwiftParity() {
+        // Both platforms must produce this exact string for the same file.
+        val a = ActivityFileImporter.parse(garminSessionFit(), "ride.fit").activity!!
+        assertEquals(
+            "Imported FIT · 30 km · 2 GPS points · Training Effect 5.0 aerobic · 3.1 anaerobic · load 404 · avg 210 W",
+            a.importNote(),
+        )
+        // Partial presence: each part only when present; anaerobic alone still carries the label.
+        val base = a.copy(trainingEffectAerobic = null, trainingLoad = 402.5, avgPowerW = null)
+        assertEquals(
+            "Imported FIT · 30 km · 2 GPS points · Training Effect 3.1 anaerobic · load 403",
+            base.importNote(),
+        )
+        assertEquals(
+            "Imported FIT · 30 km · 2 GPS points · load -3",
+            a.copy(trainingEffectAerobic = null, trainingEffectAnaerobic = null, trainingLoad = -2.5, avgPowerW = null)
+                .importNote(),
+        )
+    }
+
+    @Test
+    fun fitEnhancedAltitudeFillsElevationAndTimedRoute() {
+        val a = ActivityFileImporter.parse(garminSessionFit(), "ride.fit").activity!!
+        val base = 631_065_600L + 200_000L
+        assertEquals(listOf(base, base + 5), a.timedRoute.map { it.ts })
+        assertEquals(112.4, a.timedRoute[0].altM!!, 1e-9)
+        assertEquals(113.4, a.timedRoute[1].altM!!, 1e-9)
+        assertEquals(51.0, a.timedRoute[0].lat, 1e-6)
+        assertEquals(13.7, a.timedRoute[1].lon, 1e-6)
+        assertEquals(2, a.route.size)          // the existing route is unchanged
+    }
+
+    @Test
+    fun fitAltitudeFieldTwoWinsOverEnhanced() {
+        val fit = FitFixture()
+        fit.definition(0, 20, listOf(
+            Triple(253, 4, 0x86), Triple(0, 4, 0x85), Triple(1, 4, 0x85), Triple(78, 4, 0x86), Triple(2, 2, 0x84),
+        ))
+        val semi = 180.0 / 2_147_483_648.0
+        fit.dataHeader(0)
+        fit.u32(300_000L); fit.i32(Math.round(48.0 / semi).toInt()); fit.i32(Math.round(11.0 / semi).toInt())
+        fit.u32(Math.round((900.0 + 500.0) * 5.0))   // enhanced 900 m
+        fit.u16(((520.0 + 500.0) * 5.0).toInt())      // field 2: 520 m
+        fit.dataHeader(0)
+        fit.u32(300_001L); fit.i32(Math.round(48.0 / semi).toInt()); fit.i32(Math.round(11.0 / semi).toInt())
+        fit.u32(Math.round((901.0 + 500.0) * 5.0))   // enhanced 901 m
+        fit.u16(0xFFFF)                               // field 2 invalid -> enhanced is used
+        val a = ActivityFileImporter.parse(fit.finish(), "x.fit").activity!!
+        assertEquals(520.0, a.timedRoute[0].altM!!, 1e-9)
+        assertEquals(901.0, a.timedRoute[1].altM!!, 1e-9)
+    }
+
+    @Test
+    fun gpxLeavesTimedRouteEmptyWithSwiftParity() {
+        val gpx = """
+            <gpx><trk><trkseg>
+              <trkpt lat="51.0" lon="13.0"><ele>100</ele><time>2024-01-01T10:00:00Z</time></trkpt>
+              <trkpt lat="51.001" lon="13.0"><time>2024-01-01T10:00:05Z</time></trkpt>
+              <trkpt lat="51.002" lon="13.0"></trkpt>
+            </trkseg></trk></gpx>
+        """.trimIndent()
+        val a = ActivityFileImporter.parse(gpx.toByteArray(), "x.gpx").activity!!
+        assertTrue(a.timedRoute.isEmpty())   // FIT only, like the Swift twin
+        assertEquals(3, a.route.size)
+    }
+
+    @Test
+    fun oneDecimalRoundsHalfAwayFromTheTenthsLikeSwift() {
+        assertEquals("5.0", ActivityFileImporter.oneDecimal(5.0))
+        assertEquals("3.1", ActivityFileImporter.oneDecimal(31 / 10.0))
+        assertEquals("1.5", ActivityFileImporter.oneDecimal(1.45))   // 1.45 * 10 == 14.5 in binary64
+        assertEquals("0.3", ActivityFileImporter.oneDecimal(0.25))
+        assertEquals("-0.3", ActivityFileImporter.oneDecimal(-0.25))
+        assertEquals("0.0", ActivityFileImporter.oneDecimal(Double.NaN))
+        assertEquals(0L, ActivityFileImporter.roundHalfAwayExact(0.49999999999999994))
+        assertEquals(404L, ActivityFileImporter.roundHalfAwayExact(403.72088623046875))
+        assertEquals(-3L, ActivityFileImporter.roundHalfAwayExact(-2.5))
+    }
 }
 
 // MARK: - FIT byte fixture builder (little-endian, test-only). Mirrors the Swift FitFixture.

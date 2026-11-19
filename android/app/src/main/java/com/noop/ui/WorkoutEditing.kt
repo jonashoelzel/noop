@@ -16,7 +16,7 @@ import kotlin.math.roundToInt
  */
 
 /** Origin of a workout row, classified from its stored `source` column. */
-enum class WorkoutSource { WHOOP, APPLE, DETECTED, MANUAL, LIFTING, ACTIVITY_FILE }
+enum class WorkoutSource { WHOOP, APPLE, DETECTED, MANUAL, LIFTING, ACTIVITY_FILE, GARMIN }
 
 object WorkoutEditing {
 
@@ -32,6 +32,7 @@ object WorkoutEditing {
             s == "manual" -> WorkoutSource.MANUAL
             s == "lifting" -> WorkoutSource.LIFTING       // imported Hevy / Liftosaur strength session
             s == "activity-file" -> WorkoutSource.ACTIVITY_FILE // imported GPX / TCX / FIT activity file
+            s == "garmin-connect" -> WorkoutSource.GARMIN       // Garmin Connect Personal API import
             s.contains("whoop") -> WorkoutSource.WHOOP
             else -> WorkoutSource.APPLE
         }
@@ -188,6 +189,8 @@ object WorkoutEditing {
      * Of two same-activity rows, the one to KEEP. Prefer the richer (more captured signals); on a tie
      * prefer the strap-native source (live/manual/detected/whoop carry the real trace) over a thin
      * import (Apple Health / Health Connect); final tie -> the longer session, then [a] (stable).
+     * A Garmin Connect row is not an APPLE-class import, so on a tie it is kept over an Apple Health /
+     * Health Connect copy of the same ride: Garmin's original FIT file is the richer source of truth.
      */
     fun preferred(a: WorkoutRow, b: WorkoutRow): WorkoutRow {
         val ra = richness(a)
@@ -288,6 +291,7 @@ object WorkoutEditing {
         WorkoutSource.MANUAL -> "manual"
         WorkoutSource.LIFTING -> "lifting"
         WorkoutSource.ACTIVITY_FILE -> "activityFile"
+        WorkoutSource.GARMIN -> "garmin"
     }
 
     /**
@@ -568,7 +572,8 @@ object WorkoutMerge {
     /** Only MANUAL and DETECTED rows can be merged (imported history stays read-only). */
     fun isMergeable(row: WorkoutRow): Boolean = when (WorkoutEditing.classify(row.source)) {
         WorkoutSource.MANUAL, WorkoutSource.DETECTED -> true
-        WorkoutSource.WHOOP, WorkoutSource.APPLE, WorkoutSource.LIFTING, WorkoutSource.ACTIVITY_FILE -> false
+        WorkoutSource.WHOOP, WorkoutSource.APPLE, WorkoutSource.LIFTING, WorkoutSource.ACTIVITY_FILE,
+        WorkoutSource.GARMIN -> false
     }
 
     /** True when a set of selected rows can be merged: two or more, and every one is mergeable. */

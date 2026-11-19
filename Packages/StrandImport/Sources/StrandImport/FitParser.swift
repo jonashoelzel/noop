@@ -25,12 +25,14 @@ import Foundation
 //
 // We decode the messages that matter for a workout summary + HR/route:
 //   • record (20)   — the per-sample stream: timestamp(253), position_lat(0)/long(1) in semicircles,
-//                     heart_rate(3), altitude(2), distance(5).
+//                     heart_rate(3), altitude(2) or enhanced_altitude(78), distance(5).
 //   • lap (19)      — per-lap summary: total_distance(9), total_calories(11), total_ascent(21),
 //                     avg/max_heart_rate(15/16).
 //   • session (18)  — whole-activity summary: sport(5), start_time(2), total_distance(9),
 //                     total_calories(11), total_ascent(22), avg/max_heart_rate(16/17),
-//                     total_elapsed_time(7).
+//                     total_elapsed_time(7), plus Garmin's own figures when present:
+//                     total_training_effect(24), total_anaerobic_training_effect(137),
+//                     training_load_peak(168), avg_power(20), avg_cadence(18).
 //
 // DEFERRED (flagged in the lane risks): developer-defined fields (skipped, not decoded),
 // compressed-timestamp accumulation across records (the offset is honoured within the 32 s window but
@@ -132,6 +134,11 @@ private struct FitDecoder {
     private var sessionAscent: Double?
     private var sessionAvgHr: Int?
     private var sessionMaxHr: Int?
+    private var sessionTrainingEffect: Double?
+    private var sessionAnaerobicEffect: Double?
+    private var sessionTrainingLoad: Double?
+    private var sessionAvgPower: Int?
+    private var sessionAvgCadence: Int?
 
     private var lapDistanceSum = 0.0
     private var lapCalorieSum = 0.0
@@ -250,6 +257,7 @@ private struct FitDecoder {
         var lat: Double?
         var lon: Double?
         var ele: Double?
+        var enhancedEle: Double?
         var hr: Int?
         var time: Date?
 
@@ -271,6 +279,10 @@ private struct FitDecoder {
                 if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFFFF {
                     ele = Double(v) / 5.0 - 500.0
                 }
+            case 78:  // enhanced_altitude (u32, scale 5, offset 500). Newer Garmin devices write only this.
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFFFF_FFFF {
+                    enhancedEle = Double(v) / 5.0 - 500.0
+                }
             case 3:   // heart_rate (u8 bpm; 0xFF is FIT's "invalid", never a real 255)
                 if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
                     hr = ActivityFileImporter.validHr(Double(v))
@@ -289,7 +301,7 @@ private struct FitDecoder {
         if samples.count >= ActivityFileImporter.maxPoints { return }
         if point != nil { gpsPointCount += 1 }
         if hr != nil { hrSampleCount += 1 }
-        samples.append(.init(time: time, point: point, elevationM: ele, hr: hr))
+        samples.append(.init(time: time, point: point, elevationM: ele ?? enhancedEle, hr: hr))
     }
 
     /// lap (19): fold per-lap summary totals.
@@ -362,6 +374,26 @@ private struct FitDecoder {
             case 17: // max_heart_rate (u8 bpm; 0xFF = invalid)
                 if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
                     sessionMaxHr = ActivityFileImporter.validHr(Double(v))
+                }
+            case 24: // total_training_effect (u8, scale 10; 0xFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
+                    sessionTrainingEffect = Double(v) / 10.0
+                }
+            case 137: // total_anaerobic_training_effect (u8, scale 10; 0xFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
+                    sessionAnaerobicEffect = Double(v) / 10.0
+                }
+            case 168: // training_load_peak (s32, scale 65536; 0x7FFFFFFF = invalid)
+                if let v = intField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0x7FFF_FFFF {
+                    sessionTrainingLoad = Double(v) / 65_536.0
+                }
+            case 20: // avg_power (u16 watts; 0xFFFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFFFF {
+                    sessionAvgPower = Int(v)
+                }
+            case 18: // avg_cadence (u8 rpm; 0xFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
+                    sessionAvgCadence = Int(v)
                 }
             default:
                 break
@@ -448,6 +480,23 @@ private struct FitDecoder {
         }
     }
 
+    /// The track with per-fix times: every sample carrying BOTH a time and a valid coordinate, in file
+    /// order, capped like `route`. The time is range-checked with the same window `hrSamples` uses
+    /// before the whole-second conversion (FIT times are whole seconds already).
+    /// Kotlin twin: `ActivityFileImporter.timedRoute`.
+    static func timedRoute(from samples: [ActivityFileImporter.TrackSample]) -> [TimedRoutePoint] {
+        var out: [TimedRoutePoint] = []
+        for s in samples {
+            guard let time = s.time, let p = s.point else { continue }
+            let secs = time.timeIntervalSince1970
+            guard secs.isFinite, secs > 0, secs < 4_102_444_800 else { continue }
+            let alt = s.elevationM.flatMap { $0.isFinite ? $0 : nil }
+            out.append(TimedRoutePoint(ts: Int(secs), lat: p.lat, lon: p.lon, altM: alt))
+            if out.count >= ActivityFileImporter.maxPoints { break }
+        }
+        return out
+    }
+
     // MARK: - Build
 
     func buildResult() -> ActivityFileImportResult {
@@ -502,7 +551,13 @@ private struct FitDecoder {
             route: ActivityFileImporter.cappedRoute(route),
             // #137: the real per-record HR series, via the SHARED extractor so FIT persists a
             // byte-identical HR stream to the GPX/TCX paths (and the Kotlin twin).
-            hrSamples: ActivityFileImporter.hrSamples(from: samples)
+            hrSamples: ActivityFileImporter.hrSamples(from: samples),
+            trainingEffectAerobic: sessionTrainingEffect,
+            trainingEffectAnaerobic: sessionAnaerobicEffect,
+            trainingLoad: sessionTrainingLoad,
+            avgPowerW: sessionAvgPower,
+            avgCadence: sessionAvgCadence,
+            timedRoute: Self.timedRoute(from: samples)
         )
         return ActivityFileImportResult(activity: activity, kind: .fit, skipped: skipped)
     }

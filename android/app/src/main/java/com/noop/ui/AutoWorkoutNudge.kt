@@ -285,7 +285,8 @@ private suspend fun autoDetectCandidate(
         appleRows = repo.workouts("apple-health", fromSec, nowSec),
         healthConnectRows = repo.workouts("health-connect", fromSec, nowSec),
         liftingRows = repo.workouts(LiftingImporter.SOURCE_ID, fromSec, nowSec),
-        activityFileRows = repo.workouts(ActivityFileImporter.SOURCE_ID, fromSec, nowSec),
+        activityFileRows = repo.workouts(ActivityFileImporter.SOURCE_ID, fromSec, nowSec) +
+            repo.workouts(com.noop.garmin.GarminConnect.SOURCE_ID, fromSec, nowSec),
     )
     val saved = savedRows.map { it.startTs to it.endTs }
 

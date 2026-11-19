@@ -2303,6 +2303,7 @@ object IntelligenceEngine {
             s == "manual" -> "manual"
             s == "lifting" -> "lifting"
             s == "activity-file" -> "activityFile"
+            s == "garmin-connect" -> "garmin"
             s == "apple-health" || s == "apple_health" || s == "health-connect" -> "apple"
             s.contains("whoop") -> "strap"
             else -> "apple"

@@ -503,7 +503,7 @@ private fun RangeBar(
 /** The origin classes offered in the Source filter, in a stable menu order (matches the row badges). */
 private val SOURCE_FILTER_OPTIONS = listOf(
     WorkoutSource.WHOOP, WorkoutSource.APPLE, WorkoutSource.DETECTED,
-    WorkoutSource.MANUAL, WorkoutSource.LIFTING, WorkoutSource.ACTIVITY_FILE,
+    WorkoutSource.MANUAL, WorkoutSource.LIFTING, WorkoutSource.ACTIVITY_FILE, WorkoutSource.GARMIN,
 )
 
 /** The Source-filter menu label for an origin class. */
@@ -514,6 +514,7 @@ private fun sourceFilterLabel(c: WorkoutSource): String = when (c) {
     WorkoutSource.MANUAL -> "Manual"
     WorkoutSource.LIFTING -> "Lifting"
     WorkoutSource.ACTIVITY_FILE -> "File"
+    WorkoutSource.GARMIN -> "Garmin"
 }
 
 /**
@@ -1661,6 +1662,41 @@ internal fun WorkoutDetailSheet(vm: AppViewModel, row: WorkoutRow, onDismiss: ()
                 HeartRateRecoveryCard(it)
             }
 
+            // Send to Garmin Connect: a full FIT file (timed GPS + measured HR) for the user to upload on
+            // Garmin Connect's Import Data page. Not offered for a workout that came from Garmin Connect.
+            if (com.noop.garmin.GarminExportPlan.canSend(row)) {
+                val garminCtx = LocalContext.current
+                val garminScope = rememberCoroutineScope()
+                val uriHandler = androidx.compose.ui.platform.LocalUriHandler.current
+                var garminBusy by remember(row.startTs) { mutableStateOf(false) }
+                CardDivider()
+                Text(uiString(R.string.garmin_send_title), style = NoopType.subhead, color = Palette.textPrimary)
+                Text(uiString(R.string.garmin_send_help), style = NoopType.footnote, color = Palette.textTertiary)
+                Row(horizontalArrangement = Arrangement.spacedBy(Metrics.space12)) {
+                    NoopButton(
+                        text = uiString(R.string.garmin_send_file),
+                        kind = NoopButtonKind.Secondary,
+                        enabled = !garminBusy,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            garminBusy = true
+                            garminScope.launch {
+                                GarminExportShare.share(garminCtx, vm, row)
+                                garminBusy = false
+                            }
+                        },
+                    )
+                    NoopButton(
+                        text = uiString(R.string.garmin_open_import_page),
+                        kind = NoopButtonKind.Tertiary,
+                        modifier = Modifier.weight(1f),
+                        onClick = {
+                            runCatching { uriHandler.openUri(com.noop.garmin.GarminConnect.IMPORT_PAGE_URL) }
+                        },
+                    )
+                }
+            }
+
             // Export the recorded GPS route as a GPX/FIT file (Strava / Garmin Connect / any GPS app).
             // Only when a route with a drawable path was recorded; the file is built on-device and shared.
             row.routePolyline?.let { poly ->
@@ -2002,7 +2038,8 @@ private fun RowActionsMenu(
                         onClick = { open = false; onDelete(row) },
                     )
                 }
-                WorkoutSource.WHOOP, WorkoutSource.APPLE, WorkoutSource.LIFTING, WorkoutSource.ACTIVITY_FILE -> {
+                WorkoutSource.WHOOP, WorkoutSource.APPLE, WorkoutSource.LIFTING, WorkoutSource.ACTIVITY_FILE,
+                WorkoutSource.GARMIN -> {
                     DropdownMenuItem(
                         text = { Text(uiString(R.string.l10n_workouts_screen_duplicate_as_manual_2d580d46), style = NoopType.body, color = Palette.textPrimary) },
                         onClick = { open = false; onEdit(WorkoutEditing.asManualCopy(row), true) },
@@ -2570,6 +2607,7 @@ private val WorkoutRow.sourceBadge: Pair<String, Color>
         WorkoutSource.MANUAL -> "MAN" to Palette.statusWarning
         WorkoutSource.LIFTING -> "LIFT" to Palette.zone2 // imported Hevy / Liftosaur strength log
         WorkoutSource.ACTIVITY_FILE -> "FILE" to Palette.metricAmber // imported GPX / TCX / FIT
+        WorkoutSource.GARMIN -> "GRMN" to Palette.metricCyan // Garmin Connect Personal API import
         else -> when (workoutSourceLabel(deviceId, source)) {
             "HC" -> "HC" to Palette.metricPurple
             "Whoop" -> "WHP" to Palette.accent

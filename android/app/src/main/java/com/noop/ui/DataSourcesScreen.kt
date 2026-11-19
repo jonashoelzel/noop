@@ -765,6 +765,9 @@ fun DataSourcesScreen(vm: AppViewModel) {
         }
         }
 
+        // --- Garmin Connect (Personal API import + FIT export identity). Off until a key is saved. ---
+        item { GarminConnectCard(vm) }
+
         // --- Oura / Fitbit / Garmin own-data export — on-device ---
         item {
         SourceCard(
@@ -1001,7 +1004,7 @@ fun DataSourcesScreen(vm: AppViewModel) {
 // MARK: - Source card (mirrors the macOS private `card(...)` builder)
 
 @Composable
-private fun SourceCard(
+internal fun SourceCard(
     title: String,
     icon: ImageVector,
     subtitle: String,
@@ -1057,7 +1060,7 @@ private fun RoadmapNote(text: String) {
 // MARK: - Backup action button (matches the accent fill used by CoachPrimaryButton)
 
 @Composable
-private fun BackupButton(
+internal fun BackupButton(
     label: String,
     icon: ImageVector,
     enabled: Boolean,

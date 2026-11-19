@@ -397,7 +397,7 @@ enum DebugDataDiagnostics {
         let nowSec = Int(Date().timeIntervalSince1970)
         var seen = Set<String>()
         let ids = [did, "my-whoop", "\(did)-noop", "my-whoop-noop",
-                   "activity-file", "lifting", "apple-health", "health-connect"].filter { seen.insert($0).inserted }
+                   "activity-file", "garmin-connect", "lifting", "apple-health", "health-connect"].filter { seen.insert($0).inserted }
         var parts: [String] = []
         var latestTs = -1
         var latestDesc = ""

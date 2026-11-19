@@ -103,10 +103,12 @@ public enum GarminFitExporter {
     public static let maxSeconds = 86_400
 
     /// Suggested file name, stable for a workout so a re-export overwrites rather than piles up.
+    /// Kotlin twin: `GarminFitExport.fileName`.
     public static func fileName(startTs: Int) -> String { "noop-\(startTs)-garmin.fit" }
 
     /// A legacy route with no per-point times: spread the points evenly across the window, exactly as
     /// ``RouteExporter`` does, so it still exports (with an evened-out pace curve).
+    /// Kotlin twin: `GarminFitExport.untimedTrack`.
     public static func untimedTrack(_ points: [RoutePoint], startTs: Int, endTs: Int) -> [TrackPoint] {
         let times = RouteExporter.interpolatedTimes(points.count, startTs, endTs)
         return points.indices.map { TrackPoint(t: times[$0], lat: points[$0].lat, lon: points[$0].lon) }
@@ -114,6 +116,8 @@ public enum GarminFitExporter {
 
     // MARK: - Build
 
+    /// The complete FIT file for `w`, claiming `device`; `utcOffsetS` sets the activity's local timestamp.
+    /// Kotlin twin: `GarminFitExport.build`.
     public static func build(_ w: Workout, device: DeviceIdentity, utcOffsetS: Int) -> Data {
         let start = w.startTs
         let end = max(w.startTs, min(w.endTs, w.startTs + maxSeconds))
@@ -268,6 +272,7 @@ public enum GarminFitExporter {
     private static let enumT = 0x00, u8T = 0x02, s32T = 0x85, u16T = 0x84, u32T = 0x86, u32zT = 0x8C
 
     /// Haversine metres, the same expression order as `RouteMath.haversineMeters` on both platforms.
+    /// Kotlin twin: `GarminFitExport.haversineMeters`.
     static func haversineMeters(_ lat1: Double, _ lon1: Double, _ lat2: Double, _ lon2: Double) -> Double {
         let r = 6_371_000.0
         let dLat = (lat2 - lat1) * Double.pi / 180.0
@@ -277,21 +282,27 @@ public enum GarminFitExporter {
         return r * 2 * atan2(s.squareRoot(), (1 - s).squareRoot())
     }
 
-    /// Round half away from zero, the twin of Kotlin `roundNearestTiesAwayFromZero`.
+    /// Round half away from zero, the twin of Kotlin `GarminFitExport.roundHalfAway`.
     static func roundHalfAway(_ v: Double) -> Int64 {
         if v >= 0 { return Int64((v + 0.5).rounded(.down)) }
         return Int64((v - 0.5).rounded(.up))
     }
 
+    /// Unix seconds to FIT seconds, clamped to the valid uint32 range. Kotlin twin: `GarminFitExport.fitTime`.
     private static func fitTime(_ unix: Int) -> UInt32 {
         UInt32(min(max(0, unix - RouteExporter.fitEpoch), 0xFFFF_FFFE))
     }
+    /// Degrees to FIT semicircles. Kotlin twin: `GarminFitExport.semicircles`.
     private static func semicircles(_ deg: Double) -> Int32 {
         Int32(clamping: roundHalfAway(deg * RouteExporter.semiPerDeg))
     }
+    /// Metres to FIT distance (scale 100). Kotlin twin: `GarminFitExport.centimetres`.
     private static func centimetres(_ m: Double) -> UInt32 { UInt32(clamping: max(0, roundHalfAway(m * 100))) }
+    /// m/s to FIT speed (scale 1000). Kotlin twin: `GarminFitExport.mmPerSecond`.
     private static func mmPerSecond(_ mps: Double) -> Int { Int(min(max(0, roundHalfAway(mps * 1000)), 0xFFFE)) }
+    /// Metres to FIT altitude (scale 5, offset 500). Kotlin twin: `GarminFitExport.altitude`.
     private static func altitude(_ m: Double) -> Int { Int(min(max(0, roundHalfAway((m + 500) * 5)), 0xFFFE)) }
+    /// Kilocalories to the FIT uint16 field. Kotlin twin: `GarminFitExport.kcal`.
     private static func kcal(_ k: Double) -> Int { Int(min(max(0, roundHalfAway(k)), 0xFFFE)) }
 
     private static func defn(_ b: inout [UInt8], _ local: Int, _ global: Int, _ fields: [(Int, Int, Int)]) {

@@ -296,7 +296,7 @@ final class Repository: ObservableObject {
     /// disagree, and a future namespace added to the read alone would reintroduce exactly this bug.
     nonisolated static func workoutNamespaces(rawIds: [String]) -> [String] {
         deletableWorkoutNamespaces(rawIds: rawIds)
-            + [WorkoutSource.appleHealthSource, "lifting", "activity-file"]
+            + [WorkoutSource.appleHealthSource, "lifting", "activity-file", garminConnectSource]
     }
 
     /// The subset of [workoutNamespaces] a DELETE may touch: the strap namespaces only.
@@ -717,6 +717,8 @@ final class Repository: ObservableObject {
     static let appleHealthSource = "apple-health"
     static let healthConnectSource = "health-connect"
     static let activityFileSource = "activity-file"
+    /// Activities imported from Garmin Connect (fork feature). Same id as `GarminConnect.sourceId`.
+    nonisolated static let garminConnectSource = "garmin-connect"
 
     /// Imported wearable-export sources whose DAILY aggregates (HRV / resting HR / sleep) can be scored
     /// for a NOOP Charge/Rest on an import-only day, exactly like a live day (#823). These carry no raw HR
@@ -957,7 +959,10 @@ final class Repository: ObservableObject {
         let imported = await unionDailyMetrics(store: store, from: fromDay, to: toDay)
         let computed = await unionComputedDailyMetrics(store: store, from: fromDay, to: toDay)
         let apple = (try? await store.dailyMetrics(deviceId: Self.appleHealthSource, from: fromDay, to: toDay)) ?? []
-        let activityFile = (try? await store.dailyMetrics(deviceId: Self.activityFileSource, from: fromDay, to: toDay)) ?? []
+        // Garmin Connect imports write their per-day step totals the same way a file import does, under
+        // their own source, so they join the same fill-a-missing-step-total merge (file import first).
+        let activityFile = ((try? await store.dailyMetrics(deviceId: Self.activityFileSource, from: fromDay, to: toDay)) ?? [])
+            + ((try? await store.dailyMetrics(deviceId: Self.garminConnectSource, from: fromDay, to: toDay)) ?? [])
         let impSleep = await unionSleepSessions(store: store, from: lo, to: hi)
         let compSleep = await unionComputedSleepSessions(store: store, from: lo, to: hi)
 
@@ -3122,7 +3127,7 @@ final class Repository: ObservableObject {
             switch WorkoutSource.classify(r.source) {
             case .detected: await dismissDetected(r)
             case .manual:   await deleteWorkout(r)
-            case .whoop, .apple, .lifting, .activityFile:
+            case .whoop, .apple, .lifting, .activityFile, .garmin:
                 // Defensive: canMerge already excludes imported rows; never rewrite imported history.
                 continue
             }
@@ -3147,7 +3152,7 @@ final class Repository: ObservableObject {
             switch WorkoutSource.classify(r.source) {
             case .detected: await dismissDetected(r)
             case .manual:   await deleteWorkout(r)
-            case .whoop, .apple, .lifting, .activityFile: continue
+            case .whoop, .apple, .lifting, .activityFile, .garmin: continue
             }
         }
     }
@@ -3372,6 +3377,31 @@ final class Repository: ObservableObject {
         let samples = await hrSamples(deviceIds: ids, from: readFrom, to: readTo, limit: 2_000)
         return HeartRateRecovery.calculate(samples: samples, workoutStart: from, workoutEnd: to,
                                            maxHR: maxHR)
+    }
+
+    /// Every stored workout row in `[from, to]` across all workout namespaces, WITHOUT the dismissed filter
+    /// or the cross-source dedup: the Garmin import's skip rule must see each source's row as stored (a
+    /// collapsed pair would hide the half it needs to compare against).
+    func rawWorkoutRows(from: Int, to: Int) async -> [WorkoutRow] {
+        guard let store = await ensureStore() else { return [] }
+        var rows: [WorkoutRow] = []
+        for id in Self.workoutNamespaces(rawIds: rawPhysiologyReadIds(store: store)) {
+            rows += (try? await store.workouts(deviceId: id, from: from, to: to, limit: 5000)) ?? []
+        }
+        return Self.dedupWorkoutsByNaturalKey(rows)
+    }
+
+    /// The measured HR samples of one workout window for the "Send to Garmin Connect" FIT export: the same
+    /// ids the detail chart reads (`workoutHrDeviceIds`), plus an imported file's own stream first when the
+    /// row came from one. Capped at one sample per second of the window, which is what the export uses.
+    func workoutExportHrSamples(from: Int, to: Int, source: String) async -> [HRSample] {
+        guard to > from else { return [] }
+        var ids = Self.workoutHrDeviceIds(source: source, activeStrapId: deviceId, importedIds: importedReadIds)
+        if WorkoutSource.classify(source) == .activityFile, !ids.contains(Self.activityFileSource) {
+            ids.insert(Self.activityFileSource, at: 0)
+        }
+        let limit = max(8_000, min(to - from + 1, 86_401))
+        return await hrSamples(deviceIds: ids, from: from, to: to, limit: limit)
     }
 
     /// Apple Health daily aggregates (steps/energy/vo2/hr).

@@ -8,6 +8,7 @@ import StrandAnalytics   // WorkoutsTrace: the dedup-decision line formatter for
 ///   - "whoop"        — WhoopImporter (imported WHOOP session)
 ///   - "apple_health" / "apple-health" — AppleHealthImport
 ///   - "manual"       — AppModel.endWorkout (v1.67 live session) AND the retro add/edit sheet
+///   - "garmin-connect" — activity imported from Garmin Connect's Personal API (fork feature)
 ///   - "my-whoop-noop"— legacy IntelligenceEngine detected bouts (source == the computed deviceId,
 ///                       i.e. it ends in "-noop"). These remain readable/editable but are no longer
 ///                       created or reconciled by `analyzeRecent`.
@@ -15,7 +16,7 @@ import StrandAnalytics   // WorkoutsTrace: the dedup-decision line formatter for
 /// Classification order matters: "-noop" is checked BEFORE "whoop" because the computed id
 /// "my-whoop-noop" also contains the substring "whoop".
 enum WorkoutSource: Equatable {
-    case whoop, apple, detected, manual, lifting, activityFile
+    case whoop, apple, detected, manual, lifting, activityFile, garmin
 
     /// Canonical Apple Health source id written by new imports. The early rows used the underscore
     /// spelling, so reads must accept both — see `isAppleHealth`.
@@ -28,6 +29,7 @@ enum WorkoutSource: Equatable {
         if s == "manual" { return .manual }
         if s == "lifting" { return .lifting }          // imported Hevy / Liftosaur strength session
         if s == "activity-file" { return .activityFile } // imported GPX / TCX / FIT activity file
+        if s == Repository.garminConnectSource { return .garmin } // imported from Garmin Connect
         if isAppleHealth(s) { return .apple }          // both spellings → Apple Health
         if s.contains("whoop") { return .whoop }
         return .apple
@@ -176,11 +178,13 @@ enum WorkoutSource: Equatable {
     /// Of two same-activity rows, the one to KEEP. Prefer the richer (more captured signals); on a tie
     /// prefer the strap-native source (live/manual/detected/whoop carry the real trace) over a thin
     /// import (Apple Health / Health Connect); final tie → the longer session, then `a` (stable).
+    /// A Garmin Connect row is the device's original file, so it also wins a richness tie against an
+    /// Apple Health / Health Connect copy of the same ride (that is what the `.apple` check expresses).
     static func preferred(_ a: WorkoutRow, _ b: WorkoutRow) -> WorkoutRow {
         let ra = richness(a), rb = richness(b)
         if ra != rb { return ra > rb ? a : b }
         let ia = classify(a.source) == .apple, ib = classify(b.source) == .apple
-        if ia != ib { return ia ? b : a }   // keep the non-import on a richness tie
+        if ia != ib { return ia ? b : a }   // keep the non-import (or the Garmin original) on a richness tie
         let da = a.endTs - a.startTs, db = b.endTs - b.startTs
         if da != db { return da > db ? a : b }
         return a
@@ -264,7 +268,7 @@ enum WorkoutSource: Equatable {
     }
 
     /// A short, source-only descriptor of a row for the Workouts test-mode dedup trace ("strap" / "apple" /
-    /// "detected" / "manual" / "lifting" / "activityFile"). No timestamps or free text.
+    /// "detected" / "manual" / "lifting" / "activityFile" / "garmin"). No timestamps or free text.
     static func sourceLabel(_ row: WorkoutRow) -> String {
         switch classify(row.source) {
         case .whoop:        return "strap"
@@ -273,6 +277,7 @@ enum WorkoutSource: Equatable {
         case .manual:       return "manual"
         case .lifting:      return "lifting"
         case .activityFile: return "activityFile"
+        case .garmin:       return "garmin"
         }
     }
 
@@ -496,7 +501,7 @@ enum WorkoutMerge {
     static func isMergeable(_ row: WorkoutRow) -> Bool {
         switch WorkoutSource.classify(row.source) {
         case .manual, .detected: return true
-        case .whoop, .apple, .lifting, .activityFile: return false
+        case .whoop, .apple, .lifting, .activityFile, .garmin: return false
         }
     }
 

@@ -150,6 +150,9 @@ struct RawFix: Equatable {
     let lon: Double
     let accuracyM: Double   // horizontal accuracy radius; < 0 from CoreLocation means "invalid"
     let tMs: Int64          // fix time, ms since epoch
+    /// Metres above sea level, or nil when the fix had no valid vertical reading. Not gated by
+    /// `TrackFilter`; it only rides along with an accepted fix into the stored point.
+    var altM: Double? = nil
 }
 
 /// Pure, stateful fix gate: drops low-accuracy fixes and physically-impossible jumps, returning the
@@ -206,11 +209,14 @@ final class TrackFilter {
 
 /// A waypoint with the measurements captured by CoreLocation. Accuracy is horizontal metres and time is
 /// milliseconds since epoch, matching `RawFix` without introducing CoreLocation into persisted data.
+/// `altM` is metres above sea level when the fix had a valid vertical reading. It is optional and was
+/// added later, so stored JSON without it still decodes (as nil), and a nil value is omitted on encode.
 struct WorkoutRoutePoint: Equatable, Codable {
     var lat: Double
     var lon: Double
     var accuracyM: Double
     var tMs: Int64
+    var altM: Double? = nil
 }
 
 /// The route persisted for one finished workout: an encoded polyline, its GPS distance, and (when
@@ -664,7 +670,8 @@ final class GpsWorkoutRecorder: NSObject, ObservableObject {
                 }
                 track.append(pt)
                 routePoints.append(WorkoutRoutePoint(lat: fix.lat, lon: fix.lon,
-                                                     accuracyM: fix.accuracyM, tMs: fix.tMs))
+                                                     accuracyM: fix.accuracyM, tMs: fix.tMs,
+                                                     altM: fix.altM))
                 changed = true
             }
         }
@@ -720,7 +727,9 @@ extension GpsWorkoutRecorder: @preconcurrency CLLocationManagerDelegate {
             RawFix(lat: $0.coordinate.latitude,
                    lon: $0.coordinate.longitude,
                    accuracyM: $0.horizontalAccuracy,
-                   tMs: Int64($0.timestamp.timeIntervalSince1970 * 1000))
+                   tMs: Int64($0.timestamp.timeIntervalSince1970 * 1000),
+                   // CoreLocation reports a non-positive verticalAccuracy when the altitude is invalid.
+                   altM: $0.verticalAccuracy > 0 && $0.altitude.isFinite ? $0.altitude : nil)
         }
         ingest(fixes)
     }

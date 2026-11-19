@@ -149,6 +149,7 @@ public enum RouteExporter {
     // MARK: - Timing / units
 
     /// Per-point Unix seconds, spread evenly across `[startTs, endTs]` (start for a single point).
+    /// Kotlin twin: `RouteExport.interpolatedTimes`.
     static func interpolatedTimes(_ n: Int, _ startTs: Int, _ endTs: Int) -> [Int] {
         if n <= 0 { return [] }
         if n == 1 { return [startTs] }

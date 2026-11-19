@@ -98,10 +98,27 @@ REFERENCE_GLOBS = (
 # These constants intentionally describe different platform-local persistence schemas. Their normalized
 # names happen to match, but their migration generations do not and must not be compared as parity twins.
 # Keep the exclusion exact so unrelated schema constants still go through the normal pairing audit.
+#
+# The Garmin Connect entries are the same kind of accidental name match: the Swift GarminConnect constants'
+# real twins live in com.noop.garmin, outside the governed Kotlin roots, so the bare name would otherwise
+# pair the Garmin list page size with the Health Connect page size and make the Garmin source id ambiguous
+# against two unrelated store source ids.
 CONSTANT_NON_TWIN_PAIRS = frozenset({
     (
         "Packages/WhoopStore/Sources/WhoopStore/WhoopStore.swift::schemaVersion",
         "android/app/src/main/java/com/noop/data/WhoopDatabase.kt::SCHEMA_VERSION",
+    ),
+    (
+        "Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::pageSize",
+        "android/app/src/main/java/com/noop/ingest/HealthConnectImporter.kt::PAGE_SIZE",
+    ),
+    (
+        "Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::sourceId",
+        "android/app/src/main/java/com/noop/analytics/HydrationStore.kt::SOURCE_ID",
+    ),
+    (
+        "Packages/StrandImport/Sources/StrandImport/GarminConnect.swift::sourceId",
+        "android/app/src/main/java/com/noop/data/CycleTrackingStore.kt::SOURCE_ID",
     ),
 })
 

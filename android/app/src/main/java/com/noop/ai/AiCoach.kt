@@ -533,6 +533,7 @@ class AiCoach(
             repo.workouts("health-connect", from, to) +
             repo.detectedWorkoutsUnion(id, from, to) +
             repo.workouts(ActivityFileImporter.SOURCE_ID, from, to) +
+            repo.workouts(com.noop.garmin.GarminConnect.SOURCE_ID, from, to) +
             repo.workouts(LiftingImporter.SOURCE_ID, from, to)
         // Dismissed first, then dedup: the same order the screen uses, so a dismissed row cannot be the
         // one a cross-source collapse decides to keep.
