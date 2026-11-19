@@ -271,8 +271,8 @@ private struct FitDecoder {
                 if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFFFF {
                     ele = Double(v) / 5.0 - 500.0
                 }
-            case 3:   // heart_rate (u8 bpm)
-                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian) {
+            case 3:   // heart_rate (u8 bpm; 0xFF is FIT's "invalid", never a real 255)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
                     hr = ActivityFileImporter.validHr(Double(v))
                 }
             default:
@@ -314,8 +314,8 @@ private struct FitDecoder {
                 if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFFFF {
                     lapAscentSum += Double(v)
                 }
-            case 16: // max_heart_rate (u8 bpm)
-                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian),
+            case 16: // max_heart_rate (u8 bpm; 0xFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF,
                    let hr = ActivityFileImporter.validHr(Double(v)) {
                     lapMaxHr = max(lapMaxHr ?? 0, hr)
                 }
@@ -355,12 +355,12 @@ private struct FitDecoder {
                 if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFFFF {
                     sessionAscent = Double(v)
                 }
-            case 16: // avg_heart_rate (u8 bpm)
-                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian) {
+            case 16: // avg_heart_rate (u8 bpm; 0xFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
                     sessionAvgHr = ActivityFileImporter.validHr(Double(v))
                 }
-            case 17: // max_heart_rate (u8 bpm)
-                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian) {
+            case 17: // max_heart_rate (u8 bpm; 0xFF = invalid)
+                if let v = uintField(at: offset, size: f.size, bigEndian: def.bigEndian), v != 0xFF {
                     sessionMaxHr = ActivityFileImporter.validHr(Double(v))
                 }
             default:

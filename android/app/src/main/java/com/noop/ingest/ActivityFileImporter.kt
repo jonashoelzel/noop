@@ -722,7 +722,7 @@ internal class FitDecoder(raw: ByteArray) {
                 0 -> s(off, f.size, def.bigEndian)?.let { lat = semicircles(it) }
                 1 -> s(off, f.size, def.bigEndian)?.let { lon = semicircles(it) }
                 2 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) ele = it.toDouble() / 5.0 - 500.0 }
-                3 -> u(off, f.size, def.bigEndian)?.let { hr = ActivityFileImporter.validHr(it.toDouble()) }
+                3 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { hr = ActivityFileImporter.validHr(it.toDouble()) } // 0xFF = FIT invalid
             }
             off += f.size
         }
@@ -742,7 +742,7 @@ internal class FitDecoder(raw: ByteArray) {
                 11 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) lapCalorieSum += it.toDouble() }
                 10 -> u(off, f.size, def.bigEndian)?.let { validSteps(it, f.size)?.let { steps -> lapStepSum += steps } }
                 21 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) lapAscentSum += it.toDouble() }
-                16 -> u(off, f.size, def.bigEndian)?.let { v -> ActivityFileImporter.validHr(v.toDouble())?.let { lapMaxHr = maxOf(lapMaxHr ?: 0, it) } }
+                16 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { v -> ActivityFileImporter.validHr(v.toDouble())?.let { lapMaxHr = maxOf(lapMaxHr ?: 0, it) } }
             }
             off += f.size
         }
@@ -759,8 +759,8 @@ internal class FitDecoder(raw: ByteArray) {
                 11 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) sessionCalories = it.toDouble() }
                 10 -> u(off, f.size, def.bigEndian)?.let { sessionSteps = validSteps(it, f.size) }
                 22 -> u(off, f.size, def.bigEndian)?.let { if (it != 0xFFFFL) sessionAscent = it.toDouble() }
-                16 -> u(off, f.size, def.bigEndian)?.let { sessionAvgHr = ActivityFileImporter.validHr(it.toDouble()) }
-                17 -> u(off, f.size, def.bigEndian)?.let { sessionMaxHr = ActivityFileImporter.validHr(it.toDouble()) }
+                16 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { sessionAvgHr = ActivityFileImporter.validHr(it.toDouble()) }
+                17 -> u(off, f.size, def.bigEndian)?.takeIf { it != 0xFFL }?.let { sessionMaxHr = ActivityFileImporter.validHr(it.toDouble()) }
             }
             off += f.size
         }

@@ -212,7 +212,7 @@ public enum RouteExporter {
     }
 
     /// FIT `sport` enum (session field 5). Round-trips through the importer's sport-name map.
-    private static func fitSport(_ canon: String) -> Int {
+    static func fitSport(_ canon: String) -> Int {
         switch canon {
         case "run": return 1
         case "cycle": return 2
