@@ -24,6 +24,16 @@ class HealthConnectSelfWriteSkipTest {
         assertFalse(HealthConnectImporter.isSelfWritten("com.noop.whoop.demo", self)) // different pkg
     }
 
+    @Test fun skipsRecordsAnotherNoopInstallWrote() {
+        // Fork: the upstream app this fork replaces wrote under its own package; the backup holds that data.
+        val fork = "com.noop.whoop.jonas"
+        assertTrue(HealthConnectImporter.isSelfWritten("com.noop.whoop", fork))
+        assertTrue(HealthConnectImporter.isSelfWritten("com.noop.whoop.staging", fork))
+        assertTrue(HealthConnectImporter.isSelfWritten("com.noop.whoop.debug", fork))
+        assertFalse(HealthConnectImporter.isSelfWritten("com.noop.whoop.demo", fork))
+        assertFalse(HealthConnectImporter.isSelfWritten("com.noop.whoopsie", fork))
+    }
+
     @Test fun keepsWhenOriginUnknownOrSelfBlank() {
         // Err toward keeping data: if we can't determine self, skip nothing.
         assertFalse(HealthConnectImporter.isSelfWritten("", self))

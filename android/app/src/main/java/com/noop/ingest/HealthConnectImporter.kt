@@ -1134,7 +1134,17 @@ object HealthConnectImporter {
      * Empty [selfPackage] (origin undeterminable) never skips, so we err toward keeping data.
      */
     internal fun isSelfWritten(originPackage: String, selfPackage: String): Boolean =
-        selfPackage.isNotEmpty() && originPackage == selfPackage
+        selfPackage.isNotEmpty() && (originPackage == selfPackage || isNoopFamily(originPackage))
+
+    /**
+     * Fork (jonashoelzel/noop): records written by ANOTHER NOOP install also count as our own. The fork
+     * has its own application id, so the upstream app it replaces (`com.noop.whoop`, `.staging`, `.debug`)
+     * left Health Connect records under a different package; the restored backup already holds that data,
+     * and importing it back would duplicate it. The `.demo` builds stay foreign, as upstream decided.
+     */
+    internal fun isNoopFamily(originPackage: String): Boolean =
+        (originPackage == "com.noop.whoop" || originPackage.startsWith("com.noop.whoop.")) &&
+            !originPackage.endsWith(".demo")
 
     /**
      * #1002: which local civil day a record belongs to, keyed by the offset the record was RECORDED
