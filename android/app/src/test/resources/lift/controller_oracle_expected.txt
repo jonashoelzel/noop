@@ -1,0 +1,90 @@
+setsToSave(true) performed=true
+  [0.1 w=62.5000 r=8 rpe=8.0000 wu=false 1700000100-1700000160 rest=90]
+  [0.2 w=65.0000 r=6 rpe=9.0000 wu=false 1700000250-1700000300 rest=-]
+  [1.1 w=100.0000 r=10 rpe=- wu=true 1700000320-1700000400 rest=70]
+  [1.2 w=0.0000 r=0 rpe=- wu=false 1700000470-1700000520 rest=-]
+  [4.1 w=0.0000 r=15 rpe=- wu=false 1700000600-1700000650 rest=50]
+  [0.3 w=65.0000 r=6 rpe=8.0000 wu=false --- rest=-]
+  [0.4 w=70.0000 r=6 rpe=9.5000 wu=false --- rest=-]
+  [1.3 w=0.0000 r=0 rpe=- wu=true --- rest=-]
+  [2.1 w=40.0000 r=8 rpe=- wu=false --- rest=-]
+  [3.1 w=15.0000 r=- rpe=- wu=false --- rest=-]
+  [5.1 w=0.0000 r=60 rpe=- wu=false --- rest=-]
+setsToSave(false) performed=true
+  [0.1 w=62.5000 r=8 rpe=8.0000 wu=false 1700000100-1700000160 rest=90]
+  [0.2 w=65.0000 r=6 rpe=9.0000 wu=false 1700000250-1700000300 rest=-]
+  [1.1 w=100.0000 r=10 rpe=- wu=true 1700000320-1700000400 rest=70]
+  [1.2 w=0.0000 r=0 rpe=- wu=false 1700000470-1700000520 rest=-]
+  [4.1 w=0.0000 r=15 rpe=- wu=false 1700000600-1700000650 rest=50]
+  [0.3 w=0.0000 r=0 rpe=- wu=false --- rest=-]
+  [0.4 w=0.0000 r=0 rpe=- wu=false --- rest=-]
+  [1.3 w=0.0000 r=0 rpe=- wu=true --- rest=-]
+  [2.1 w=0.0000 r=0 rpe=- wu=false --- rest=-]
+  [3.1 w=0.0000 r=0 rpe=- wu=false --- rest=-]
+  [5.1 w=0.0000 r=0 rpe=- wu=false --- rest=-]
+unfinished=0.3,0.4,1.3,2.1,3.1,5.1
+anyPerformed(only discarded)=false
+changes=i1:Bench:3->4,i2:Squat:1->3
+programAfterSession(keep=true)
+  {i1 ord=0 Bench sets=4 reps=6-6 rpe=8.0000 w=65.0000 rest=90 note=elbows}
+  {i2 ord=1 Squat sets=3 reps=10-12 rpe=- w=- rest=- note=-}
+  {i9 ord=5 Calf sets=2 reps=--- rpe=- w=30.0000 rest=45 note=-}
+  {new1 ord=6 Dips sets=1 reps=15-- rpe=- w=0.0000 rest=- note=-}
+  {new2 ord=7 Plank sets=1 reps=0-- rpe=- w=0.0000 rest=- note=-}
+programAfterSession(keep=false)
+  {i1 ord=0 Bench sets=3 reps=6-6 rpe=8.0000 w=65.0000 rest=90 note=elbows}
+  {i2 ord=1 Squat sets=- reps=10-12 rpe=- w=- rest=- note=-}
+  {i9 ord=5 Calf sets=2 reps=--- rpe=- w=30.0000 rest=45 note=-}
+knock(-1)=000000
+knock(0)=111001
+knock(1)=111001
+knock(2)=111001
+knock(3)=111001
+knock(4)=111001
+knock(5)=000000
+knock(6)=000000
+rest(+0)=1001,-
+rest(+1)=1001,1001
+rest(+3)=1001,1003
+rest(+5)=1001,1005
+rest(+6)=1001,1006
+rest(+30)=1025,1030
+rest(+120)=1115,1120
+trim(0.0)=0
+trim(8.0)=8
+trim(8.0001)=8
+trim(7.5)=7.5
+trim(12.25)=12.25
+trim(12.255)=12.26
+trim(45.5)=45.5
+trim(102.05796)=102.06
+trim(0.005)=0.01
+trim(0.004)=0
+trim(1.995)=2
+trim(-2.5)=-2.5
+trim(102.05840462301894)=102.06
+trim(1000000000.0)=1000000000
+trim(99.999)=100
+number('7,5')=7.5000
+number(' 12.25 ')=12.2500
+number('')=-
+number('abc')=-
+number('1e3')=1000.0000
+number('.5')=0.5000
+number('5.')=5.0000
+number('-3')=-3.0000
+number('+4')=4.0000
+number('1,000.5')=-
+number('１２')=-
+duration(0)=0s
+duration(5)=5s
+duration(59)=59s
+duration(60)=1:00
+duration(61)=1:01
+duration(90)=1:30
+duration(125)=2:05
+duration(600)=10:00
+duration(3599)=59:59
+duration(3600)=60:00
+lb(60.0)=132.28 lb kg=60 kg back=102.0584
+lb(102.05795)=225 lb kg=102.06 kg back=102.0584

@@ -1,0 +1,115 @@
+// Swift oracle for LiftSessionControllerOracleTest. Regenerate controller_oracle_expected.txt from the repo root:
+//   for f in LiftSessionEngine LiftSessionController LiftSessionPersistence LiftFormat; do
+//     sed '/^import WhoopStore/d;/^import StrandAnalytics/d' Strand/Data/$f.swift > $f.swift; done
+//   (save the STUBS block below as stub.swift and the rest as main.swift)
+//   swiftc -O stub.swift LiftSessionEngine.swift LiftSessionController.swift LiftSessionPersistence.swift LiftFormat.swift main.swift -o oracle
+//   ./oracle > controller_oracle_expected.txt
+// ---- STUBS (stub.swift) ----
+// import Foundation
+// enum LiftMuscle: String { case chest, quads, glutes, lats }
+// enum LiftMetrics { static func isPerformed(reps: Int?) -> Bool { reps != 0 } }
+// enum UnitSystem { case metric, imperial }
+// enum UnitFormatter {
+//     static let poundsPerKilogram = 2.20462
+//     static func massUnit(_ s: UnitSystem) -> String { s == .imperial ? "lb" : "kg" }
+// }
+// struct LiftProgramItemRow: Equatable {
+//     var id: String; var deviceId: String; var programId: String; var ord: Int; var exercise: String
+//     var targetSets: Int?; var targetRepsLow: Int?; var targetRepsHigh: Int?; var targetRpe: Double?
+//     var targetWeightKg: Double?; var restSec: Int?; var note: String?
+// }
+// ---- main.swift ----
+import Foundation
+
+func d(_ v: Double?) -> String { v.map { String(format: "%.4f", $0) } ?? "-" }
+func i(_ v: Int?) -> String { v.map(String.init) ?? "-" }
+func slot(_ s: LiftSlot) -> String { "\(s.exerciseIndex).\(s.setIndex)" }
+func fs(_ f: LiftSessionController.FinishedSet) -> String {
+    "[\(slot(f.slot)) w=\(d(f.weightKg)) r=\(i(f.reps)) rpe=\(d(f.rpe)) wu=\(f.isWarmup) \(i(f.startTs))-\(i(f.endTs)) rest=\(i(f.restSec))]"
+}
+func row(_ r: LiftProgramItemRow) -> String {
+    "{\(r.id) ord=\(r.ord) \(r.exercise) sets=\(i(r.targetSets)) reps=\(i(r.targetRepsLow))-\(i(r.targetRepsHigh)) rpe=\(d(r.targetRpe)) w=\(d(r.targetWeightKg)) rest=\(i(r.restSec)) note=\(r.note ?? "-")}"
+}
+
+@MainActor func run() {
+    let plan = [
+        LiftPlanItem(exercise: "Bench", primaryMuscle: .chest, targetSets: 3, restSec: 90, targetRepsLow: 8, targetRepsHigh: 10, targetRpe: 8, targetWeightKg: 60, programItemId: "i1"),
+        LiftPlanItem(exercise: "Squat", targetSets: 2, restSec: 60, targetRepsLow: 10, programItemId: "i2"),
+        LiftPlanItem(exercise: "Row", targetSets: 1, targetRepsLow: 12, targetWeightKg: 40, programItemId: "gone"),
+        LiftPlanItem(exercise: "Free", targetSets: 1, targetWeightKg: 15),
+    ]
+    var e = LiftSessionEngine(plan: plan, startTs: 1_700_000_000)
+    let t0 = 1_700_000_000
+    e.advance(now: t0 + 100)                     // start 0.1
+    e.advance(now: t0 + 160)                     // done 0.1
+    e.updateSet(LiftSlot(exerciseIndex: 0, setIndex: 1), weightKg: 62.5, reps: nil, rpe: nil, isWarmup: false)
+    e.advance(now: t0 + 250)                     // start 0.2
+    e.advance(now: t0 + 300)                     // done 0.2
+    e.updateSet(LiftSlot(exerciseIndex: 0, setIndex: 2), weightKg: 65, reps: 6, rpe: 9, isWarmup: false)
+    e.start(LiftSlot(exerciseIndex: 1, setIndex: 1), now: t0 + 320)
+    e.advance(now: t0 + 400)                     // done 1.1
+    e.updateSet(LiftSlot(exerciseIndex: 1, setIndex: 1), weightKg: 100, reps: 10, rpe: nil, isWarmup: true)
+    e.advance(now: t0 + 470)                     // start 1.2
+    e.advance(now: t0 + 520)                     // done 1.2
+    e.updateSet(LiftSlot(exerciseIndex: 1, setIndex: 2), weightKg: 0, reps: 0, rpe: nil, isWarmup: false)
+    _ = e.addSet(toExercise: 0)                  // Bench now 4
+    _ = e.addSet(toExercise: 1)                  // Squat now 3
+    _ = e.addExercise(LiftPlanItem(exercise: "Dips", targetSets: 3, targetRepsLow: 0, targetWeightKg: 0, programItemId: "new1", addedInSession: true))
+    _ = e.addExercise(LiftPlanItem(exercise: "Plank", targetSets: 1, targetRepsLow: 0, targetWeightKg: 0, programItemId: "new2", addedInSession: true))
+    e.start(LiftSlot(exerciseIndex: 4, setIndex: 1), now: t0 + 600)
+    e.advance(now: t0 + 650)                     // done 4.1 (Dips)
+    e.updateSet(LiftSlot(exerciseIndex: 4, setIndex: 1), weightKg: nil, reps: 15, rpe: nil, isWarmup: false)
+    e.finish(now: t0 + 700)
+
+    let snap = LiftSessionPersistence.snapshot(
+        engine: e, programId: "p1", programName: "Upper",
+        pendingValues: [LiftSlot(exerciseIndex: 0, setIndex: 4): .init(weightKg: 70, reps: nil, rpe: 9.5),
+                        LiftSlot(exerciseIndex: 2, setIndex: 1): .init(weightKg: nil, reps: 8, rpe: nil)],
+        pendingWarmups: [LiftSlot(exerciseIndex: 1, setIndex: 3)])
+    let c = LiftSessionController(buzz: { _ in }, setStrapHandler: { _ in })
+    c.resume(from: snap)
+    c.setLastSession(["Bench": [3: LiftSetCarry(weightKg: 61, reps: 7)], "Plank": [1: LiftSetCarry(weightKg: nil, reps: 60)]])
+
+    for complete in [true, false] {
+        let sets = c.setsToSave(completingUnfinished: complete)
+        print("setsToSave(\(complete)) performed=\(LiftSessionController.anyPerformed(sets))")
+        sets.forEach { print("  " + fs($0)) }
+    }
+    print("unfinished=" + c.unfinishedSlots.map(slot).joined(separator: ","))
+    let none = c.setsToSave(completingUnfinished: false).filter { $0.startTs == nil }
+    print("anyPerformed(only discarded)=\(LiftSessionController.anyPerformed(none))")
+
+    let items = [
+        LiftProgramItemRow(id: "i1", deviceId: "dev", programId: "p1", ord: 0, exercise: "Bench", targetSets: 3, targetRepsLow: 5, targetRepsHigh: 6, targetRpe: 8, targetWeightKg: 60, restSec: 90, note: "elbows"),
+        LiftProgramItemRow(id: "i2", deviceId: "dev", programId: "p1", ord: 1, exercise: "Squat", targetSets: nil, targetRepsLow: 10, targetRepsHigh: 12, targetRpe: nil, targetWeightKg: nil, restSec: nil, note: nil),
+        LiftProgramItemRow(id: "i9", deviceId: "dev", programId: "p1", ord: 5, exercise: "Calf", targetSets: 2, targetRepsLow: nil, targetRepsHigh: nil, targetRpe: nil, targetWeightKg: 30, restSec: 45, note: nil),
+    ]
+    let finalPlan = c.engine!.plan
+    print("changes=" + LiftSessionController.setCountChanges(plan: finalPlan, program: items).map { "\($0.itemId):\($0.exercise):\($0.from)->\($0.to)" }.joined(separator: ","))
+    let saved = c.setsToSave(completingUnfinished: true)
+    for keep in [true, false] {
+        print("programAfterSession(keep=\(keep))")
+        LiftSessionController.programAfterSession(saved, plan: finalPlan, program: items, keepingChanges: keep, programId: "p1", deviceId: "dev").forEach { print("  " + row($0)) }
+    }
+
+    for since in -1...6 {
+        let now = 5_000
+        let stages: [LiftSessionEngine.Stage] = [.warmup, .working(LiftSlot(exerciseIndex: 0, setIndex: 1)), .resting(LiftSlot(exerciseIndex: 0, setIndex: 1), endsAt: now + 10), .resting(LiftSlot(exerciseIndex: 0, setIndex: 1), endsAt: now), .resting(LiftSlot(exerciseIndex: 0, setIndex: 1), endsAt: now - 3), .finished]
+        print("knock(\(since))=" + stages.map { LiftSessionController.isKnock(secondsSinceLastStep: since, stage: $0, now: now) ? "1" : "0" }.joined())
+    }
+    for ends in [0, 1, 3, 5, 6, 30, 120] {
+        let t = LiftSessionController.restEventTimes(endsAt: 1_000 + ends, now: 1_000)
+        print("rest(+\(ends))=\(t.warning),\(i(t.end))")
+    }
+    for v in [0, 8, 8.0001, 7.5, 12.25, 12.255, 45.5, 102.05796, 0.005, 0.004, 1.995, -2.5, 225 / 2.20462, 1e9, 99.999] {
+        print("trim(\(v))=\(LiftFormat.trim(v))")
+    }
+    for s in ["7,5", " 12.25 ", "", "abc", "1e3", ".5", "5.", "-3", "+4", "1,000.5", "１２"] {
+        print("number('\(s)')=\(d(LiftFormat.number(s)))")
+    }
+    for s in [0, 5, 59, 60, 61, 90, 125, 600, 3599, 3600] { print("duration(\(s))=\(LiftFormat.duration(s))") }
+    for kg in [60.0, 102.05795] {
+        print("lb(\(kg))=\(LiftFormat.weight(kg, system: .imperial)) kg=\(LiftFormat.weight(kg, system: .metric)) back=\(d(LiftFormat.kilograms(fromDisplay: 225, system: .imperial)))")
+    }
+}
+MainActor.assumeIsolated { run() }
