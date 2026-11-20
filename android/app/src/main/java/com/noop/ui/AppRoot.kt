@@ -596,7 +596,9 @@ fun AppRoot(viewModel: AppViewModel = viewModel()) {
                                 .padding(bottom = if (BottomBarStyleStore.overlay) barHeight else 0.dp),
                         )
                     }
-                    if (!BottomBarStyleStore.overlay) {
+                    // The running session is a focus screen with its own pinned controls, like the iOS sheet
+                    // presented over the tab bar: no tab bar on top of it.
+                    if (!BottomBarStyleStore.overlay && currentRoute != Destination.LiftSession.route) {
                         GlassBottomBar(
                             current = current,
                             onTabSelected = { dest ->
@@ -960,7 +962,7 @@ fun AppRoot(viewModel: AppViewModel = viewModel()) {
         // TalkBack could focus a bar nobody can see and a tap could land on a control that is not there.
         // Dropping it at the end of the animation removes both. Safe precisely because it is an overlay —
         // it reserves no space, so composing or not composing it never reflows content.
-        if (BottomBarStyleStore.overlay && barPresent) GlassBottomBar(
+        if (BottomBarStyleStore.overlay && barPresent && currentRoute != Destination.LiftSession.route) GlassBottomBar(
             current = current,
             onTabSelected = { dest ->
                 if (dest.route != currentRoute) nav.navigateTopLevel(dest.route)
