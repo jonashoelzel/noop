@@ -134,6 +134,20 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
     // into [repository] (same process-wide DB).
     val ble = noopApp.ble
 
+    /** The running Lift Log session (process-owned, see [NoopApplication.liftSession]). */
+    val liftSession: com.noop.lift.LiftSessionController get() = noopApp.liftSession
+
+    /** The Lift Log screens' reads and writes. Workouts go through the same path a manual workout takes. */
+    val liftLog: com.noop.lift.LiftLogRepository by lazy {
+        com.noop.lift.LiftLogRepository(
+            dao = com.noop.data.WhoopDatabase.get(appContext).whoopDao(),
+            deviceId = { noopApp.activeDeviceId },
+            saveWorkout = { saveManualWorkout(it) },
+            deleteWorkout = { deleteWorkout(it) },
+            workoutsAt = { id, ts -> repository.workouts(id, ts, ts) },
+        )
+    }
+
     val repo: WhoopRepository get() = repository
 
     /** The registry's active strap id (the same id the read path resolves to). The getter stays source
@@ -3162,6 +3176,14 @@ class AppViewModel(app: Application) : AndroidViewModel(app) {
         if (ev == lastDispatchedEvent) return       // not a fresh event since we last looked
         lastDispatchedEvent = ev
         if (ev == null || !ev.startsWith("DOUBLE_TAP")) return
+        // A running Lift Log session takes the gesture for its lifetime (iOS strapDoubleTapOverride):
+        // the tap moves the session on instead of running the configured action.
+        val lift = noopApp.liftSession
+        if (lift.wantsStrapTap) {
+            ble.externalLog("Double-tap -> Lift Log: next")
+            lift.advance(fromStrap = true)
+            return
+        }
         val action = _doubleTapAction.value
         if (action == DoubleTapAction.NONE) return
         ble.externalLog("Double-tap -> ${action.label}")

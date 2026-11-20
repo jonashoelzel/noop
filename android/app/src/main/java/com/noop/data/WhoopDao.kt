@@ -248,7 +248,7 @@ internal const val PROMOTE_WHOOP4_HISTORY_SQL =
  * and bound by [from, to] inclusive with a row limit.
  */
 @Dao
-interface WhoopDao : DeviceRegistryDao {
+interface WhoopDao : DeviceRegistryDao, LiftLogDao {
 
     // MARK: - Device
 

@@ -813,6 +813,182 @@
       "identity_sha256": "ddb3b70862080c3cf970da238f3d0296c6c0b5e2520c8bc1c350677bf973895b",
       "platform": "kotlin",
       "rationale": "Fork: Health Connect is Android-only. Records written by another NOOP install (upstream com.noop.whoop and its .staging/.debug builds) count as self-written so the fork does not re-import data its restored backup already holds. Apple Health has no equivalent package-origin check to pair."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::deleteLiftProgramItemsOf/1#1",
+      "identity_sha256": "a969279c1d155ae29405660ae7d550e4161d732ff06fedbc654350e374b04507",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::deleteLiftProgramRaw/1#1",
+      "identity_sha256": "67652b689a3a53e7cc97b3facb504adccf6efdbe45cba1406a7a97a70ad5a2c2",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::deleteLiftSessionRaw/1#1",
+      "identity_sha256": "2c15b5f0bbe964afb6b8a1b29fe00b1fe151b2ff9a53809aff2f4da1bf38dc0b",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::deleteLiftSetsOf/1#1",
+      "identity_sha256": "452a4ecc0f3c9cd078429de619d783d6f6e3e84bdc417f92659979ba900327b5",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::from/1#1",
+      "identity_sha256": "72a0649eca3c89fb7e34f05278ac5040ff5e1b9c7be3d53d9263ee7b1b7012a7",
+      "platform": "kotlin",
+      "rationale": "LiftSetCounts.from is the aggregation loop that Swift runs inline inside WhoopStore.liftSetCounts; Kotlin keeps it on the result type so the paired liftSetCounts DAO method stays a one-line read plus fold."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::insertLiftExerciseRaw/1#1",
+      "identity_sha256": "93b47c2922b5827ae3c5f90c32eaf3a1758fccac2555e6f4fd08c2132f572e36",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::insertLiftProgramItemsRaw/1#1",
+      "identity_sha256": "291460c5cd4cc5f4515a63dcad8555302711494bc74126586ffae913ff3b3ae0",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::insertLiftProgramRaw/1#1",
+      "identity_sha256": "a167df7154a51e30b4b9ff43273041b6cd5c18ffe5df8e5e7960b3c1badb58d9",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::insertLiftSessionRaw/1#1",
+      "identity_sha256": "762c29d0fce937e6fa25cf746503109fede0a61ef8a98e1aa988082fa955c844",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::insertLiftSetRaw/1#1",
+      "identity_sha256": "19d6a874c7061f7144a4eb24da780d07c793a57a329053e814e89eeaec40c1b2",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::lastLiftSessionIdFor/3#1",
+      "identity_sha256": "5ec799f2be51a8e5b67d4ab02c5fceb5ed4022a3cbac02ab2725f9fad868de94",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftExerciseByName/2#1",
+      "identity_sha256": "278b9b7d5331eb5a2e172bc489665829eb906e503819d643604c8c7f233379b3",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftExerciseCount/1#1",
+      "identity_sha256": "28cfdc6c2d31e57a1ed27db98b6f6c1a8b2545ec40304c47cc468c4fd217285e",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftProgramById/1#1",
+      "identity_sha256": "d6eb93dbc0206d996cb36d95a98259d5f85380753c6d0db5face35458f924292",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftSessionByNaturalKey/3#1",
+      "identity_sha256": "c3f20b14ef80ddfef24c9a428edd644cdbc3d902b487e51faa327759d763fbac",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftSetById/1#1",
+      "identity_sha256": "53ab3364ec9175fda2baa1573c76a3af21e621f3b17743b2559cbfd3731417e6",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftSetMuscles/3#1",
+      "identity_sha256": "ca813b08115e4e8f057b1f029f7b4fc547c6931c3c6630dbbc1106be9b71ae78",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::performedLiftSetsOf/2#1",
+      "identity_sha256": "1886a577acad2d769c907fc9cc7d4e64396adc96b88c94d337a49f8b587b8bb8",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::updateLiftExerciseRaw/1#1",
+      "identity_sha256": "3bfba107d89a037bc1a4a562f5349d23cf4b01170aad4a6026c54a5b58b704cb",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::updateLiftProgramRaw/1#1",
+      "identity_sha256": "f3558a8289f129d8c656fcae675baf8ad3dc89e0b8431f71cef60727de338b16",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::updateLiftSessionRaw/1#1",
+      "identity_sha256": "2e37bdf23cb5639d32df935d80b74c9a3b3b3300b9f3d67f7d9c9588c4b2606c",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::updateLiftSetRaw/1#1",
+      "identity_sha256": "5106032594f29e1cb2e526a66038247067fc29ac075b18de5d4083bf8014665d",
+      "platform": "kotlin",
+      "rationale": "Room statement backing the Kotlin LiftLogDao transaction that reproduces the Swift ON CONFLICT DO UPDATE upsert or multi-statement delete; minSdk 26 ships SQLite 3.18, which has no upsert clause, so the read-then-insert-or-update steps exist only on Android."
     }
   ]
 }

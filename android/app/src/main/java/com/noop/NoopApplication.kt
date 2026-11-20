@@ -59,6 +59,8 @@ class NoopApplication : Application() {
         // case it exists for is a strap that stopped talking. Scheduled here rather than beside a widget
         // so it does not inherit that widget's lifecycle. KEEP, so this is a no-op once scheduled.
         com.noop.notif.StaleBatteryWorker.ensureScheduled(this)
+        // A gym session the previous process left running comes back before any screen asks about it.
+        liftSession.resumeSaved()
     }
 
     /** Process-wide Room-backed store. One instance shared by the UI and the background service. */
@@ -122,6 +124,24 @@ class NoopApplication : Application() {
         val rows = runCatching { runBlocking { deviceRegistry.all() } }.getOrNull() ?: return id
         val row = rows.firstOrNull { it.id == id } ?: return id
         return if (SourceIdentity.isWhoop(row)) id else WhoopBleClient.DEFAULT_DEVICE_ID
+    }
+
+    /**
+     * The running Lift Log session, owned by the process rather than a screen, so leaving the session
+     * screen (or the Activity being recreated) never deafens the strap double-tap or loses the rest timer.
+     * Its buzzes go through [HapticPrefs.LIFT_REST]; [ble] is only touched when one actually fires.
+     */
+    val liftSession: com.noop.lift.LiftSessionController by lazy {
+        com.noop.lift.LiftSessionController(
+            prefs = com.noop.lift.LiftSessionPersistence.prefs(this),
+            scope = kotlinx.coroutines.CoroutineScope(
+                kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.Main.immediate,
+            ),
+            buzz = { loops ->
+                if (com.noop.ui.HapticPrefs.enabled(this, com.noop.ui.HapticPrefs.LIFT_REST)) ble.buzz(loops)
+            },
+            log = { line -> ble.externalLog(line) },
+        )
     }
 
     /** Process-wide BLE client. Owns the GATT connection and outlives any single Activity/ViewModel. */

@@ -26,6 +26,10 @@ object HapticPrefs {
     const val LIVE_SESSION = "haptics.liveSession"
     const val WORKOUT = "haptics.workout"
 
+    /** The Lift Log's buzzes: one pulse confirming a strap double-tap moved the session on, three when a
+     *  rest is nearly up. Same key as Apple's `HapticPrefs.liftRest`, which also has no Settings row. */
+    const val LIFT_REST = "haptics.liftRest"
+
     /** Whether an in-session cue may fire. DEFAULT-ON: an unset key reads true, so no migration is needed —
      *  a fresh install buzzes as the features always did, and turning a cue off is an explicit user choice. */
     fun enabled(ctx: Context, key: String): Boolean = p(ctx).getBoolean(key, true)

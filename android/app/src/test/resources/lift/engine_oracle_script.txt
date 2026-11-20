@@ -1,0 +1,33 @@
+advance 1100
+advance 1160
+update 0 1 62.5 - 9 0
+advance 1250
+advance 1300
+start 1 1 1320
+advance 1400
+update 1 1 - 12 - 1
+advance 1405
+start 0 3 1500
+undo
+start 0 3 1500
+advance 1560
+addset 0
+addset 3
+rmset 0
+rmset 1
+advance 1700
+advance 1720
+update 0 4 70 6 9.5 0
+addex Dips
+addset 4
+start 0 2 1800
+advance 1830
+advance 1900
+start 2 1 1950
+advance 2000
+finish 2100
+undo
+undo
+undo
+finish 2200
+addex Late
