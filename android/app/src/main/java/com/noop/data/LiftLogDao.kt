@@ -130,10 +130,6 @@ interface LiftLogDao {
     @Query("SELECT * FROM liftProgram WHERE deviceId = :deviceId AND archived = 0 ORDER BY updatedAt DESC")
     suspend fun liftPrograms(deviceId: String): List<LiftProgramRow>
 
-    /** Every program for a device, archived included, most recently touched first. */
-    @Query("SELECT * FROM liftProgram WHERE deviceId = :deviceId ORDER BY updatedAt DESC")
-    suspend fun liftProgramsIncludingArchived(deviceId: String): List<LiftProgramRow>
-
     @Query("DELETE FROM liftProgramItem WHERE programId = :programId")
     suspend fun deleteLiftProgramItemsOf(programId: String)
 

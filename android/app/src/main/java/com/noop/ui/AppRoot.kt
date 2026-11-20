@@ -151,6 +151,10 @@ internal enum class Destination(
 
     // Group: Activity
     Workouts("workouts", R.string.nav_workouts, Icons.Filled.FitnessCenter),
+    // The in-app strength log (#2327). Listed after Workouts, as on the iOS More list.
+    LiftLog("lift_log", R.string.nav_lift_log, Icons.Filled.FitnessCenter),
+    // The running gym session. Reached from the Lift Log or the session bar only, never from More.
+    LiftSession("lift_session", R.string.nav_lift_log, Icons.Filled.FitnessCenter),
     Trends("trends", R.string.nav_trends, Icons.AutoMirrored.Filled.TrendingUp),
 
     // Group: Insight
@@ -242,7 +246,7 @@ internal val drawerGroups: List<DrawerGroup> = listOf(
         Destination.Insights, Destination.Explore, Destination.Compare,
     ), defaultExpanded = true),
     DrawerGroup("Body", R.string.more_group_body, listOf(
-        Destination.Live, Destination.Workouts, Destination.Health, Destination.VitalSigns,
+        Destination.Live, Destination.Workouts, Destination.LiftLog, Destination.Health, Destination.VitalSigns,
         Destination.LabBook, Destination.Stress, Destination.Breathe, Destination.Intervals,
         Destination.Rhythm,
     ), defaultExpanded = true),
@@ -581,13 +585,25 @@ fun AppRoot(viewModel: AppViewModel = viewModel()) {
                 // destination is lost without the drawer.
                 // DEFAULT path: the shipped reserved slot, unchanged. Empty only when the overlay is
                 // on, where the bar is drawn below as a sibling and the slot must reserve nothing.
-                if (!BottomBarStyleStore.overlay) {
-                    GlassBottomBar(
-                        current = current,
-                        onTabSelected = { dest ->
-                            if (dest.route != currentRoute) nav.navigateTopLevel(dest.route)
-                        },
-                    )
+                Column {
+                    // The running gym session, reachable from every screen but its own (#2327).
+                    if (currentRoute != Destination.LiftSession.route) {
+                        LiftSessionBar(
+                            viewModel,
+                            onOpen = { nav.navigate(Destination.LiftSession.route) { launchSingleTop = true } },
+                            modifier = Modifier
+                                .padding(horizontal = 14.dp, vertical = 6.dp)
+                                .padding(bottom = if (BottomBarStyleStore.overlay) barHeight else 0.dp),
+                        )
+                    }
+                    if (!BottomBarStyleStore.overlay) {
+                        GlassBottomBar(
+                            current = current,
+                            onTabSelected = { dest ->
+                                if (dest.route != currentRoute) nav.navigateTopLevel(dest.route)
+                            },
+                        )
+                    }
                 }
             },
         ) { inner ->
@@ -752,6 +768,12 @@ fun AppRoot(viewModel: AppViewModel = viewModel()) {
                 // --- v5 pillar screens (Wave 3 wiring) ---
                 composable(Destination.InsightsHub.route) { InsightsHubScreen(viewModel) }
                 composable(Destination.LabBook.route) { LabBookScreen(viewModel) }
+                composable(Destination.LiftLog.route) {
+                    LiftLogScreen(viewModel, onOpenSession = { nav.navigate(Destination.LiftSession.route) { launchSingleTop = true } })
+                }
+                // Leaving this screen (Back, or the session ending) leaves the session running; the bar
+                // under the navigation brings it back.
+                composable(Destination.LiftSession.route) { LiftSessionScreen(viewModel, onClose = { nav.popBackStack() }) }
                 composable(Destination.Rhythm.route) {
                     RhythmRoute(viewModel)
                 }

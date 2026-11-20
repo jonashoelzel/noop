@@ -552,14 +552,6 @@
     {
       "type": "platform_specific",
       "kind": "add-unpaired-function",
-      "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftProgramsIncludingArchived/1#1",
-      "identity_sha256": "e8c3a9a935255b74d15f093915b8026aad34ebddb46cdf2e5434622ef7195149",
-      "platform": "kotlin",
-      "rationale": "Swift liftPrograms(deviceId:includeArchived:) branches its SQL on a Bool; a Room @Query cannot, so the archived-inclusive read is a second query beside the paired liftPrograms."
-    },
-    {
-      "type": "platform_specific",
-      "kind": "add-unpaired-function",
       "identity": "kotlin\u0000android/app/src/main/java/com/noop/data/LiftLogDao.kt::liftSessionByNaturalKey/3#1",
       "identity_sha256": "c3f20b14ef80ddfef24c9a428edd644cdbc3d902b487e51faa327759d763fbac",
       "platform": "kotlin",

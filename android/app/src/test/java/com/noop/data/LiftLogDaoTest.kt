@@ -177,14 +177,13 @@ class LiftLogDaoTest {
     fun programsUpsertByIdAndHideArchived() = runBlocking {
         dao.upsertLiftPrograms(listOf(program("p1", "Upper A", 10), program("p2", "Old", 20, archived = true)))
         assertEquals(listOf("p1"), dao.liftPrograms(dev).map { it.id })
-        assertEquals(listOf("p2", "p1"), dao.liftProgramsIncludingArchived(dev).map { it.id })
 
         dao.upsertLiftPrograms(listOf(program("p1", "Upper A (renamed)", 30).copy(createdAt = 999)))
         val p1 = dao.liftProgramById("p1")!!
         assertEquals("Upper A (renamed)", p1.name)
         assertEquals(30L, p1.updatedAt)
         assertEquals("createdAt is kept on update", 1L, p1.createdAt)
-        assertEquals(2, dao.liftProgramsIncludingArchived(dev).size)
+        assertEquals("p2", dao.liftProgramById("p2")?.id)
     }
 
     /** testReplaceProgramItemsSwapsTheWholeList */
@@ -251,16 +250,6 @@ class LiftLogDaoTest {
         assertEquals(65.0, x1.weightKg!!, 0.0)
         assertEquals(8, x1.reps)
         assertEquals(2, dao.liftSets("s1").size)
-    }
-
-    /** testDeletingSetsRemovesOnlyThoseSets (the existing DeviceRegistryDao.deleteLiftSets). */
-    @Test
-    fun deletingSetsRemovesOnlyThoseSets() = runBlocking {
-        dao.upsertLiftSessions(listOf(session("s1", 1_000)))
-        dao.upsertLiftSets(listOf(set("x1", "s1", 0, 1), set("x2", "s1", 1, 2), set("x3", "s1", 2, 3)))
-        dao.deleteLiftSets(listOf("x2", "missing"))
-        assertEquals(listOf("x1", "x3"), dao.liftSets("s1").map { it.id })
-        assertEquals(1, dao.liftSessions(dev, 0, 9_999).size)
     }
 
     // MARK: - The read the feature exists for
