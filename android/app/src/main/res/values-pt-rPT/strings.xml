@@ -2866,10 +2866,9 @@
     <string name="garmin_syncing">A sincronizar…</string>
     <string name="garmin_never_synced">Ainda não sincronizado</string>
     <string name="garmin_status_line">Última sincronização %1$s · %2$s</string>
+    <string name="garmin_just_now">agora mesmo</string>
     <string name="garmin_export_identity_label">Os ficheiros exportados identificam-se como</string>
-    <string name="garmin_identity_forerunner945">Forerunner 945 (recomendado: a Garmin conta os emblemas)</string>
     <string name="garmin_identity_noop">NOOP (sem dispositivo Garmin)</string>
-    <string name="garmin_export_identity_help">O Garmin Connect só atribui emblemas a ficheiros de um dispositivo Garmin.</string>
     <string name="garmin_send_title">Enviar para o Garmin Connect</string>
     <string name="garmin_send_help">Carregue este ficheiro no Garmin Connect → Importar dados. O Garmin Connect reencaminha-o para o Strava se tiver ligado o Strava lá.</string>
     <string name="garmin_send_file">Partilhar ficheiro FIT</string>

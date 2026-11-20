@@ -2769,10 +2769,9 @@
     <string name="garmin_syncing">Синхронизация…</string>
     <string name="garmin_never_synced">Ещё не синхронизировано</string>
     <string name="garmin_status_line">Последняя синхронизация %1$s · %2$s</string>
+    <string name="garmin_just_now">только что</string>
     <string name="garmin_export_identity_label">Экспортированные файлы определяются как</string>
-    <string name="garmin_identity_forerunner945">Forerunner 945 (рекомендуется: Garmin засчитывает значки)</string>
     <string name="garmin_identity_noop">NOOP (без устройства Garmin)</string>
-    <string name="garmin_export_identity_help">Garmin Connect засчитывает значки только для файлов с устройства Garmin.</string>
     <string name="garmin_send_title">Отправить в Garmin Connect</string>
     <string name="garmin_send_help">Загрузите этот файл в Garmin Connect → Импорт данных. Garmin Connect перешлёт его в Strava, если вы подключили там Strava.</string>
     <string name="garmin_send_file">Поделиться файлом FIT</string>

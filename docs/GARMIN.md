@@ -44,15 +44,14 @@ Garmin offers no upload API for individuals, so this step is manual but official
    ([connect.garmin.com/modern/import-data](https://connect.garmin.com/modern/import-data)).
 3. If Strava is connected in Garmin Connect, Garmin forwards the workout to Strava.
 
-**Device label.** Garmin Connect only credits badges and challenges for files from a Garmin device,
-so the file names a device you pick under **Data Sources → Garmin Connect → Exported files identify
-as**:
+**Device label.** The file names a recording device, which Garmin Connect shows on the activity. Pick
+it under **Data Sources → Garmin Connect → Exported files identify as**:
 
 | Option | Effect (tested 2026-11-19) |
 | --- | --- |
-| Forerunner 945 (default) | Imported as an original device recording, with HR graph and badges, forwarded to Strava. No Training Effect. |
-| Tacx Training App | Same, plus a "First Tacx Ride" badge. No Training Effect for an outdoor run either. |
-| NOOP (no Garmin device) | Imported, but Garmin credits no badges. |
+| Forerunner 945 (default) | Imported as an original device recording, with HR graph, forwarded to Strava. No Training Effect. |
+| Tacx Training App | Same, shown as "Tacx Training (Windows)". No Training Effect for an outdoor run either. |
+| NOOP (no Garmin device) | Not tested yet. |
 
 Garmin Connect does not calculate Training Effect or Training Load for uploaded files with either
 label, so these runs do not yet count toward Garmin's Training Status. That is an open question in

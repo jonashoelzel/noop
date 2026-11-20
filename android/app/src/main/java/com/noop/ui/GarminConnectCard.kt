@@ -180,24 +180,28 @@ internal fun GarminConnectCard(vm: AppViewModel) {
                 }
             }
         }
-        Text(uiString(R.string.garmin_export_identity_help), style = NoopType.footnote, color = Palette.textTertiary)
     }
 }
 
 @Composable
 private fun statusLine(lastAttempt: Long?, summary: String?): String {
     if (lastAttempt == null) return uiString(R.string.garmin_never_synced)
-    val rel = DateUtils.getRelativeTimeSpanString(
-        lastAttempt * 1000, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS,
-    ).toString()
+    val now = System.currentTimeMillis()
+    // Under a minute, "just now" rather than "0 minutes ago".
+    val rel = if (now - lastAttempt * 1000 < DateUtils.MINUTE_IN_MILLIS) {
+        uiString(R.string.garmin_just_now)
+    } else {
+        DateUtils.getRelativeTimeSpanString(lastAttempt * 1000, now, DateUtils.MINUTE_IN_MILLIS).toString()
+    }
     return uiString(R.string.garmin_status_line, rel, summary.orEmpty())
 }
 
-/** A product name, identical in every language, so it is not a string resource. */
+/** Product names, identical in every language, so they are not string resources. */
+private const val FORERUNNER_945 = "Forerunner 945"
 private const val TACX_TRAINING_APP = "Tacx Training App"
 
 private fun identityLabel(d: GarminFitExport.DeviceIdentity): String = when (d) {
-    GarminFitExport.DeviceIdentity.FORERUNNER_945 -> uiString(R.string.garmin_identity_forerunner945)
+    GarminFitExport.DeviceIdentity.FORERUNNER_945 -> FORERUNNER_945
     GarminFitExport.DeviceIdentity.TACX_TRAINING_APP -> TACX_TRAINING_APP
     GarminFitExport.DeviceIdentity.NOOP -> uiString(R.string.garmin_identity_noop)
 }

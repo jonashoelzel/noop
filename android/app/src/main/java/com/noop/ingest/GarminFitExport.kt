@@ -19,11 +19,11 @@ import kotlin.math.sqrt
  *
  * Fork feature (jonashoelzel/noop): the user uploads the file through Garmin Connect's web "Import Data"
  * page; Garmin Connect then forwards it to Strava. The layout reproduces the file verified against Garmin
- * Connect on 2026-11-19 (accepted, "Summary Data: Original", HR graph, badges, forwarded to Strava).
+ * Connect on 2026-11-19 (accepted, "Summary Data: Original", HR graph, forwarded to Strava).
  *
- * [DeviceIdentity] is written into file_id and device_info. Garmin Connect only credits badges for files
- * that name a Garmin product, so the user picks which identity the file claims; [DeviceIdentity.NOOP]
- * makes no Garmin claim.
+ * [DeviceIdentity] is written into file_id and device_info and is what Garmin Connect shows as the
+ * recording device. It is a label the user picks, not a measurement; [DeviceIdentity.NOOP] makes no Garmin
+ * claim.
  */
 object GarminFitExport {
 

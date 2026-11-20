@@ -9,11 +9,11 @@ import Foundation
 /// Fork feature (jonashoelzel/noop): the file is uploaded by the user through Garmin Connect's web
 /// "Import Data" page, and Garmin Connect then forwards it to Strava. The layout reproduces the file that
 /// was verified against Garmin Connect on 2026-11-19 (accepted, "Summary Data: Original", HR graph,
-/// badges, forwarded to Strava).
+/// forwarded to Strava).
 ///
-/// The `device` identity is written into file_id and device_info. Garmin Connect only credits badges and
-/// challenges for files that name a Garmin product, so the user chooses which identity the file claims.
-/// That is a label the user picks, not a measurement, and it is why ``DeviceIdentity/noop`` exists.
+/// The `device` identity is written into file_id and device_info and is what Garmin Connect shows as the
+/// recording device. It is a label the user picks, not a measurement, which is why ``DeviceIdentity/noop``
+/// (no Garmin claim) exists.
 public enum GarminFitExporter {
 
     /// One timed GPS fix. `t` is Unix seconds. `altM` is metres above sea level when the fix had one.
@@ -38,12 +38,12 @@ public enum GarminFitExporter {
     /// platforms, so they must not change.
     public enum DeviceIdentity: String, CaseIterable, Sendable {
         /// Garmin Forerunner 945 (manufacturer garmin, product 3113). The identity verified to import as an
-        /// original device recording, with badges.
+        /// original device recording.
         case forerunner945 = "forerunner945"
         /// Tacx Training App for Windows (manufacturer tacx, product 20533), the identity
         /// peloton-to-garmin uses to get Garmin's server-side Training Effect for indoor sessions.
         case tacxTrainingApp = "tacxTrainingApp"
-        /// No Garmin claim: manufacturer "development". Garmin Connect imports it but credits no badges.
+        /// No Garmin claim: manufacturer "development".
         case noop = "noop"
 
         public static let `default`: DeviceIdentity = .forerunner945

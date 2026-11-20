@@ -2903,10 +2903,9 @@
     <string name="garmin_syncing">Syncing…</string>
     <string name="garmin_never_synced">Not synced yet</string>
     <string name="garmin_status_line">Last sync %1$s · %2$s</string>
+    <string name="garmin_just_now">just now</string>
     <string name="garmin_export_identity_label">Exported files identify as</string>
-    <string name="garmin_identity_forerunner945">Forerunner 945 (recommended: Garmin counts badges)</string>
     <string name="garmin_identity_noop">NOOP (no Garmin device)</string>
-    <string name="garmin_export_identity_help">Garmin Connect only credits badges for files from a Garmin device.</string>
     <string name="garmin_send_title">Send to Garmin Connect</string>
     <string name="garmin_send_help">Upload this file at Garmin Connect → Import Data. Garmin Connect forwards it to Strava if you connected Strava there.</string>
     <string name="garmin_send_file">Share FIT file</string>

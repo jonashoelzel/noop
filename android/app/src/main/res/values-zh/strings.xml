@@ -2844,10 +2844,9 @@
     <string name="garmin_syncing">正在同步…</string>
     <string name="garmin_never_synced">尚未同步</string>
     <string name="garmin_status_line">上次同步 %1$s · %2$s</string>
+    <string name="garmin_just_now">刚刚</string>
     <string name="garmin_export_identity_label">导出文件的设备标识</string>
-    <string name="garmin_identity_forerunner945">Forerunner 945（推荐：Garmin 会计入徽章）</string>
     <string name="garmin_identity_noop">NOOP（非 Garmin 设备）</string>
-    <string name="garmin_export_identity_help">Garmin Connect 只为来自 Garmin 设备的文件计入徽章。</string>
     <string name="garmin_send_title">发送到 Garmin Connect</string>
     <string name="garmin_send_help">在 Garmin Connect → 导入数据 中上传此文件。如果你在那里连接了 Strava，Garmin Connect 会将其转发到 Strava。</string>
     <string name="garmin_send_file">分享 FIT 文件</string>

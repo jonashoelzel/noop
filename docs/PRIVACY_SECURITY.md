@@ -233,8 +233,8 @@ integration that upstream NOOP does not have. See [`GARMIN.md`](GARMIN.md) for s
   `garmin-connect` source.
 - **Sending workouts to Garmin is not a network path.** "Send to Garmin Connect" only writes a FIT
   file and opens the system share sheet; the user uploads it on Garmin Connect's web import page.
-  The file names the device identity the user picked in settings (a Garmin product by default, so
-  Garmin Connect credits badges), which is a label, not a measurement.
+  The file names the device identity the user picked in settings (a Garmin product by default),
+  which is a label, not a measurement.
 - **Diagnostics.** The strap log records counts and an error class (for example "key rejected",
   "HTTP 429") only, never the key, a token, an activity name or a health value.
 

@@ -805,6 +805,14 @@
       "identity_sha256": "738dd4d8e2ca0316f49c2887eaee4333f90c2c602aeaa56d7b3ef07a2298b054",
       "platform": "swift",
       "rationale": "Computed switch property of the Swift GarminFitExporter.DeviceIdentity enum. The Kotlin twin is the `softwareVersion` constructor value of GarminFitExport.DeviceIdentity, which the property inventory does not list (enum constructor values) and whose file stem differs, so the scanner cannot pair it."
+    },
+    {
+      "type": "platform_specific",
+      "kind": "add-unpaired-function",
+      "identity": "kotlin\u0000android/app/src/main/java/com/noop/ingest/HealthConnectImporter.kt::isNoopFamily/1#1",
+      "identity_sha256": "ddb3b70862080c3cf970da238f3d0296c6c0b5e2520c8bc1c350677bf973895b",
+      "platform": "kotlin",
+      "rationale": "Fork: Health Connect is Android-only. Records written by another NOOP install (upstream com.noop.whoop and its .staging/.debug builds) count as self-written so the fork does not re-import data its restored backup already holds. Apple Health has no equivalent package-origin check to pair."
     }
   ]
 }

@@ -110,7 +110,10 @@ struct GarminConnectSettingsView: View {
                 if sync.isSyncing { ProgressView().controlSize(.small) }
             }
             if let ts = sync.lastAttemptTs, let summary = sync.lastSummary {
-                let when = Date(timeIntervalSince1970: TimeInterval(ts)).formatted(.relative(presentation: .named))
+                // Under a minute, "just now" rather than "in 0 seconds" / "0 minutes ago".
+                let when = Int(Date().timeIntervalSince1970) - ts < 60
+                    ? String(localized: "just now")
+                    : Date(timeIntervalSince1970: TimeInterval(ts)).formatted(.relative(presentation: .named))
                 Text("Last sync \(when): \(summary)")
                     .font(StrandFont.footnote)
                     .foregroundStyle(StrandPalette.textSecondary)
@@ -124,7 +127,7 @@ struct GarminConnectSettingsView: View {
     private var exportSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             Picker(selection: $exportDeviceRaw) {
-                Text("Forerunner 945 (recommended: Garmin counts badges)")
+                Text(verbatim: "Forerunner 945")
                     .tag(GarminFitExporter.DeviceIdentity.forerunner945.rawValue)
                 Text("Tacx Training App")
                     .tag(GarminFitExporter.DeviceIdentity.tacxTrainingApp.rawValue)
@@ -137,10 +140,6 @@ struct GarminConnectSettingsView: View {
             }
             .pickerStyle(.menu)
             .tint(StrandPalette.zone1)
-            Text("Garmin Connect only credits badges for files from a Garmin device.")
-                .font(StrandFont.footnote)
-                .foregroundStyle(StrandPalette.textTertiary)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
