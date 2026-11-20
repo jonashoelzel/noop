@@ -79,14 +79,17 @@ interface LiftLogDao {
         return n
     }
 
-    /** The picker's list: most recently used first, never-used after, alphabetical within each. */
-    @Query(
-        "SELECT * FROM liftExercise WHERE deviceId = :deviceId " +
-            "ORDER BY COALESCE(lastUsedTs, 0) DESC, name ASC",
-    )
+    /**
+     * The picker's list: most recently used first, never-used after, alphabetical within each.
+     * Swift twin: `WhoopStore.liftExercises`.
+     */
+    @Query("SELECT * FROM liftExercise WHERE deviceId = :deviceId ORDER BY COALESCE(lastUsedTs, 0) DESC, name ASC")
     suspend fun liftExercises(deviceId: String): List<LiftExerciseRow>
 
-    /** Forget one exercise. Sets already logged under the name keep their own copy of it. */
+    /**
+     * Forget one exercise. Sets already logged under the name keep their own copy of it.
+     * Swift twin: `WhoopStore.deleteLiftExercise`.
+     */
     @Query("DELETE FROM liftExercise WHERE id = :id")
     suspend fun deleteLiftExercise(id: String): Int
 
@@ -120,7 +123,10 @@ interface LiftLogDao {
         return rows.size
     }
 
-    /** Live programs for a device, most recently touched first. */
+    /**
+     * Live programs for a device, most recently touched first: Swift `liftPrograms` with
+     * `includeArchived` false. Swift twin: `WhoopStore.liftPrograms`.
+     */
     @Query("SELECT * FROM liftProgram WHERE deviceId = :deviceId AND archived = 0 ORDER BY updatedAt DESC")
     suspend fun liftPrograms(deviceId: String): List<LiftProgramRow>
 
@@ -162,7 +168,7 @@ interface LiftLogDao {
         return items.size
     }
 
-    /** A program's lines in program order. */
+    /** A program's lines in program order. Swift twin: `WhoopStore.liftProgramItems`. */
     @Query("SELECT * FROM liftProgramItem WHERE programId = :programId ORDER BY ord ASC")
     suspend fun liftProgramItems(programId: String): List<LiftProgramItemRow>
 
@@ -205,11 +211,11 @@ interface LiftLogDao {
         return rows.size
     }
 
-    /** Sessions that started within [fromTs, toTs] inclusive, most recent first. */
-    @Query(
-        "SELECT * FROM liftSession WHERE deviceId = :deviceId AND startTs >= :fromTs AND startTs <= :toTs " +
-            "ORDER BY startTs DESC",
-    )
+    /**
+     * Sessions that started within [fromTs, toTs] inclusive, most recent first.
+     * Swift twin: `WhoopStore.liftSessions`.
+     */
+    @Query("SELECT * FROM liftSession WHERE deviceId = :deviceId AND startTs BETWEEN :fromTs AND :toTs ORDER BY startTs DESC")
     suspend fun liftSessions(deviceId: String, fromTs: Long, toTs: Long): List<LiftSessionRow>
 
     @Query("DELETE FROM liftSet WHERE sessionId = :sessionId")
@@ -260,7 +266,7 @@ interface LiftLogDao {
         return rows.size
     }
 
-    /** Every set in a session, in the order performed. */
+    /** Every set in a session, in the order performed. Swift twin: `WhoopStore.liftSets`. */
     @Query("SELECT * FROM liftSet WHERE sessionId = :sessionId ORDER BY ord ASC")
     suspend fun liftSets(sessionId: String): List<LiftSetEntity>
 
