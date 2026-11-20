@@ -1,0 +1,65 @@
+// Swift oracle for LiftSessionEngineOracleTest. Regenerate engine_oracle_expected.txt with:
+//   sed '/^import WhoopStore/d' Strand/Data/LiftSessionEngine.swift > engine.swift
+//   echo 'enum LiftMuscle: String { case chest, quads, glutes, lats }' > stub.swift
+//   swiftc -O stub.swift engine.swift LiftEngineOracle.swift -o oracle
+//   ./oracle engine_oracle_script.txt > engine_oracle_expected.txt
+// (rename this file to main.swift first, or pass it as the last input; top-level code needs main.swift)
+import Foundation
+
+func d(_ v: Double?) -> String { v.map { String(format: "%.2f", $0) } ?? "-" }
+func i(_ v: Int?) -> String { v.map(String.init) ?? "-" }
+func slot(_ s: LiftSlot?) -> String { s.map { "\($0.exerciseIndex).\($0.setIndex)" } ?? "-" }
+func stage(_ s: LiftSessionEngine.Stage) -> String {
+    switch s {
+    case .warmup: return "warmup"
+    case .working(let x): return "working(\(slot(x)))"
+    case .resting(let x, let e): return "resting(\(slot(x)),\(e))"
+    case .finished: return "finished"
+    }
+}
+let last: [String: [Int: LiftSetCarry]] = [
+    "Bench": [1: LiftSetCarry(weightKg: 57.5, reps: 8), 2: LiftSetCarry(weightKg: 57.5, reps: 7)],
+    "Curl": [1: LiftSetCarry(weightKg: 20, reps: 12)],
+]
+func dump(_ e: LiftSessionEngine, now: Int) -> String {
+    var out = "stage=\(stage(e.stage)) at=\(e.stageStartedAt) plan=\(e.plan.map { "\($0.exercise):\($0.targetSets)" }.joined(separator: ","))"
+    out += " next=\(slot(e.nextPendingSlot)) up=\(slot(e.upcomingSlot)) cur=\(slot(e.currentSlot))"
+    out += " undo=\(e.canUndo) done=\(e.allCompleted) fin=\(e.isFinished) planned=\(e.plannedWorkingSets) completed=\(e.completedWorkingSets) unperf=\(e.unperformedSlots.count) rest=\(i(e.restRemaining(now: now + 30)))\n"
+    out += "  sets=" + e.sets.map { "[\(slot($0.slot)) w=\(d($0.weightKg)) r=\(i($0.reps)) rpe=\(d($0.rpe)) wu=\($0.isWarmup) \($0.startTs)-\($0.endTs) rest=\(i($0.restSec))]" }.joined() + "\n"
+    out += "  carry=" + e.allSlots.map { s -> String in
+        let ls = last[e.planItem(for: s)!.exercise] ?? [:]
+        let c = e.carry(for: s, lastSession: ls); let v = e.values(of: s, lastSession: ls)
+        let after = e.slotAfter(s)
+        return "\(slot(s)):\(d(c.weightKg))x\(i(c.reps))/\(d(v.weightKg))x\(i(v.reps))>\(slot(after))"
+    }.joined(separator: " ") + " canRm=" + e.plan.indices.map { e.canRemoveSet(fromExercise: $0) ? "1" : "0" }.joined()
+    return out
+}
+
+let plan = [
+    LiftPlanItem(exercise: "Bench", primaryMuscle: .chest, targetSets: 3, restSec: 90, targetRepsLow: 8, targetRepsHigh: 10, targetRpe: 8, targetWeightKg: 60),
+    LiftPlanItem(exercise: "Squat", primaryMuscle: .quads, secondaryMuscles: [.glutes], targetSets: 2, restSec: 0, targetRepsLow: 10),
+    LiftPlanItem(exercise: "Curl", targetSets: nil, restSec: nil),
+    LiftPlanItem(exercise: "Zero", targetSets: 0, restSec: -5),
+]
+var e = LiftSessionEngine(plan: plan, startTs: 1_000)
+let script = try! String(contentsOfFile: CommandLine.arguments[1])
+print(dump(e, now: 1_000))
+for raw in script.split(separator: "\n") {
+    let p = raw.split(separator: " ").map(String.init)
+    guard !p.isEmpty else { continue }
+    let n = { (k: Int) -> Int in Int(p[k])! }
+    var now = 0
+    switch p[0] {
+    case "advance": now = n(1); e.advance(now: now)
+    case "start": now = n(3); e.start(LiftSlot(exerciseIndex: n(1), setIndex: n(2)), now: now)
+    case "update": e.updateSet(LiftSlot(exerciseIndex: n(1), setIndex: n(2)), weightKg: p[3] == "-" ? nil : Double(p[3]), reps: p[4] == "-" ? nil : Int(p[4]), rpe: p[5] == "-" ? nil : Double(p[5]), isWarmup: p[6] == "1")
+    case "addset": print("  -> \(e.addSet(toExercise: n(1)))")
+    case "rmset": print("  -> \(e.removeSet(fromExercise: n(1)))")
+    case "addex": print("  -> \(e.addExercise(LiftPlanItem(exercise: p[1], targetSets: 4, targetRepsLow: 0, targetWeightKg: 0, programItemId: "new", addedInSession: true)))")
+    case "finish": now = n(1); e.finish(now: now)
+    case "undo": e.undo()
+    default: fatalError(String(raw))
+    }
+    print("> " + raw)
+    print(dump(e, now: now))
+}

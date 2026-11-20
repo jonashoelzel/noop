@@ -1,0 +1,142 @@
+stage=warmup at=1000 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.1 up=0.1 cur=- undo=false done=false fin=false planned=7 completed=0 unperf=7 rest=-
+  sets=
+  carry=0.1:57.50x8/57.50x8>0.1 0.2:57.50x7/57.50x7>0.1 0.3:60.00x8/60.00x8>0.1 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> advance 1100
+stage=working(0.1) at=1100 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.1 up=0.2 cur=0.1 undo=true done=false fin=false planned=7 completed=0 unperf=7 rest=-
+  sets=
+  carry=0.1:57.50x8/57.50x8>0.1 0.2:57.50x7/57.50x7>0.1 0.3:60.00x8/60.00x8>0.1 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> advance 1160
+stage=resting(0.1,1250) at=1160 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.2 up=0.2 cur=0.1 undo=true done=false fin=false planned=7 completed=1 unperf=6 rest=60
+  sets=[0.1 w=- r=- rpe=- wu=false 1100-1160 rest=-]
+  carry=0.1:57.50x8/57.50x8>0.2 0.2:57.50x8/57.50x8>0.2 0.3:57.50x8/57.50x8>0.2 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> update 0 1 62.5 - 9 0
+stage=resting(0.1,1250) at=1160 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.2 up=0.2 cur=0.1 undo=true done=false fin=false planned=7 completed=1 unperf=6 rest=1220
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.2 0.2:62.50x8/62.50x8>0.2 0.3:62.50x8/62.50x8>0.2 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> advance 1250
+stage=working(0.2) at=1250 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.2 up=0.3 cur=0.2 undo=true done=false fin=false planned=7 completed=1 unperf=6 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90]
+  carry=0.1:57.50x8/62.50x8>0.2 0.2:62.50x8/62.50x8>0.2 0.3:62.50x8/62.50x8>0.2 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> advance 1300
+stage=resting(0.2,1390) at=1300 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=0.3 cur=0.2 undo=true done=false fin=false planned=7 completed=2 unperf=5 rest=60
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> start 1 1 1320
+stage=working(1.1) at=1320 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=1.2 cur=1.1 undo=true done=false fin=false planned=7 completed=2 unperf=5 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x10>1.1 1.2:-x10/-x10>1.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> advance 1400
+stage=resting(1.1,1400) at=1400 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=1.2 cur=1.1 undo=true done=false fin=false planned=7 completed=3 unperf=4 rest=0
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=- rpe=- wu=false 1320-1400 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x10>1.2 1.2:-x10/-x10>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> update 1 1 - 12 - 1
+stage=resting(1.1,1400) at=1400 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=1.2 cur=1.1 undo=true done=false fin=false planned=7 completed=2 unperf=4 rest=1370
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+> advance 1405
+stage=working(1.2) at=1405 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=0.3 cur=1.2 undo=true done=false fin=false planned=7 completed=2 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1000
+> start 0 3 1500
+stage=working(0.3) at=1500 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=1.2 cur=0.3 undo=true done=false fin=false planned=7 completed=2 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=0100
+> undo
+stage=working(1.2) at=1405 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=0.3 cur=1.2 undo=true done=false fin=false planned=7 completed=2 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1000
+> start 0 3 1500
+stage=working(0.3) at=1500 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=0.3 up=1.2 cur=0.3 undo=true done=false fin=false planned=7 completed=2 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5]
+  carry=0.1:57.50x8/62.50x8>0.3 0.2:62.50x8/62.50x8>0.3 0.3:62.50x8/62.50x8>0.3 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=0100
+> advance 1560
+stage=resting(0.3,1650) at=1560 plan=Bench:3,Squat:2,Curl:1,Zero:1 next=1.2 up=1.2 cur=0.3 undo=true done=false fin=false planned=7 completed=3 unperf=3 rest=60
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=-]
+  carry=0.1:57.50x8/62.50x8>1.2 0.2:62.50x8/62.50x8>1.2 0.3:62.50x8/62.50x8>1.2 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=0100
+  -> true
+> addset 0
+stage=resting(0.3,1650) at=1560 plan=Bench:4,Squat:2,Curl:1,Zero:1 next=0.4 up=0.4 cur=0.3 undo=true done=false fin=false planned=8 completed=3 unperf=4 rest=1620
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.4 0.2:62.50x8/62.50x8>0.4 0.3:62.50x8/62.50x8>0.4 0.4:62.50x8/62.50x8>0.4 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 canRm=1100
+  -> true
+> addset 3
+stage=resting(0.3,1650) at=1560 plan=Bench:4,Squat:2,Curl:1,Zero:2 next=0.4 up=0.4 cur=0.3 undo=true done=false fin=false planned=9 completed=3 unperf=5 rest=1620
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.4 0.2:62.50x8/62.50x8>0.4 0.3:62.50x8/62.50x8>0.4 0.4:62.50x8/62.50x8>0.4 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 canRm=1101
+  -> true
+> rmset 0
+stage=resting(0.3,1650) at=1560 plan=Bench:3,Squat:2,Curl:1,Zero:2 next=1.2 up=1.2 cur=0.3 undo=true done=false fin=false planned=8 completed=3 unperf=4 rest=1620
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=-]
+  carry=0.1:57.50x8/62.50x8>1.2 0.2:62.50x8/62.50x8>1.2 0.3:62.50x8/62.50x8>1.2 1.1:-x10/-x12>1.2 1.2:-x12/-x12>1.2 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 canRm=0101
+  -> true
+> rmset 1
+stage=resting(0.3,1650) at=1560 plan=Bench:3,Squat:1,Curl:1,Zero:2 next=2.1 up=2.1 cur=0.3 undo=true done=false fin=false planned=7 completed=3 unperf=3 rest=1620
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=-]
+  carry=0.1:57.50x8/62.50x8>2.1 0.2:62.50x8/62.50x8>2.1 0.3:62.50x8/62.50x8>2.1 1.1:-x10/-x12>2.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 canRm=0001
+> advance 1700
+stage=working(2.1) at=1700 plan=Bench:3,Squat:1,Curl:1,Zero:2 next=2.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=7 completed=3 unperf=3 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140]
+  carry=0.1:57.50x8/62.50x8>2.1 0.2:62.50x8/62.50x8>2.1 0.3:62.50x8/62.50x8>2.1 1.1:-x10/-x12>2.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 canRm=0001
+> advance 1720
+stage=resting(2.1,1840) at=1720 plan=Bench:3,Squat:1,Curl:1,Zero:2 next=3.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=7 completed=4 unperf=2 rest=90
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 canRm=0001
+> update 0 4 70 6 9.5 0
+stage=resting(2.1,1840) at=1720 plan=Bench:3,Squat:1,Curl:1,Zero:2 next=3.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=7 completed=4 unperf=2 rest=1810
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 canRm=0001
+  -> true
+> addex Dips
+stage=resting(2.1,1840) at=1720 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:1 next=3.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=8 completed=4 unperf=3 rest=1810
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 canRm=00010
+  -> true
+> addset 4
+stage=resting(2.1,1840) at=1720 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=9 completed=4 unperf=4 rest=1810
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][0.2 w=- r=- rpe=- wu=false 1250-1300 rest=-][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> start 0 2 1800
+stage=working(0.2) at=1800 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=0.2 up=3.1 cur=0.2 undo=true done=false fin=false planned=9 completed=3 unperf=5 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-]
+  carry=0.1:57.50x8/62.50x8>0.2 0.2:62.50x8/62.50x8>0.2 0.3:62.50x8/62.50x8>0.2 1.1:-x10/-x12>0.2 2.1:20.00x12/20.00x12>0.2 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> advance 1830
+stage=resting(0.2,1920) at=1830 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=3.1 cur=0.2 undo=true done=false fin=false planned=9 completed=4 unperf=4 rest=60
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> advance 1900
+stage=working(3.1) at=1900 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=3.2 cur=3.1 undo=true done=false fin=false planned=9 completed=4 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> start 2 1 1950
+stage=working(2.1) at=1950 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=2.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=9 completed=3 unperf=5 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70]
+  carry=0.1:57.50x8/62.50x8>2.1 0.2:62.50x8/62.50x8>2.1 0.3:62.50x8/62.50x8>2.1 1.1:-x10/-x12>2.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> advance 2000
+stage=resting(2.1,2120) at=2000 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=9 completed=4 unperf=4 rest=90
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70][2.1 w=- r=- rpe=- wu=false 1950-2000 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> finish 2100
+stage=finished at=2100 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=- cur=- undo=true done=false fin=true planned=9 completed=4 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70][2.1 w=- r=- rpe=- wu=false 1950-2000 rest=100]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> undo
+stage=resting(2.1,2120) at=2000 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=9 completed=4 unperf=4 rest=2090
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70][2.1 w=- r=- rpe=- wu=false 1950-2000 rest=-]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> undo
+stage=working(2.1) at=1950 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=2.1 up=3.1 cur=2.1 undo=true done=false fin=false planned=9 completed=3 unperf=5 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70]
+  carry=0.1:57.50x8/62.50x8>2.1 0.2:62.50x8/62.50x8>2.1 0.3:62.50x8/62.50x8>2.1 1.1:-x10/-x12>2.1 2.1:20.00x12/20.00x12>2.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> undo
+stage=working(3.1) at=1900 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=3.2 cur=3.1 undo=true done=false fin=false planned=9 completed=4 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+> finish 2200
+stage=finished at=2200 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=- cur=- undo=true done=false fin=true planned=9 completed=4 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
+  -> false
+> addex Late
+stage=finished at=2200 plan=Bench:3,Squat:1,Curl:1,Zero:2,Dips:2 next=3.1 up=- cur=- undo=true done=false fin=true planned=9 completed=4 unperf=4 rest=-
+  sets=[0.1 w=62.50 r=- rpe=9.00 wu=false 1100-1160 rest=90][1.1 w=- r=12 rpe=- wu=true 1320-1400 rest=5][0.3 w=- r=- rpe=- wu=false 1500-1560 rest=140][2.1 w=- r=- rpe=- wu=false 1700-1720 rest=-][0.2 w=- r=- rpe=- wu=false 1800-1830 rest=70]
+  carry=0.1:57.50x8/62.50x8>3.1 0.2:62.50x8/62.50x8>3.1 0.3:62.50x8/62.50x8>3.1 1.1:-x10/-x12>3.1 2.1:20.00x12/20.00x12>3.1 3.1:-x-/-x->3.1 3.2:-x-/-x->3.1 4.1:0.00x0/0.00x0>4.1 4.2:0.00x0/0.00x0>4.1 canRm=00011
