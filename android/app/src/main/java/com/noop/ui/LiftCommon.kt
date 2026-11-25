@@ -75,7 +75,7 @@ internal fun liftMuscleName(m: LiftMuscle): String = stringResource(
 )
 
 @Composable
-private fun liftRegionName(r: LiftMuscle.Region): String = stringResource(
+internal fun liftRegionName(r: LiftMuscle.Region): String = stringResource(
     when (r) {
         LiftMuscle.Region.push -> R.string.lift_region_push
         LiftMuscle.Region.pull -> R.string.lift_region_pull
@@ -234,18 +234,7 @@ internal fun LiftMusclePicker(
                         for (m in LiftMuscle.entries) {
                             if (m == primary) continue
                             val on = m in secondaries
-                            Text(
-                                liftMuscleName(m),
-                                style = NoopType.caption,
-                                color = if (on) Palette.effortColor else Palette.textSecondary,
-                                modifier = Modifier
-                                    .background(
-                                        if (on) Palette.effortColor.copy(alpha = 0.14f) else Palette.surfaceRaised,
-                                        RoundedCornerShape(Metrics.space8),
-                                    )
-                                    .clickable { onSecondaries(if (on) secondaries - m else secondaries + m) }
-                                    .padding(horizontal = Metrics.space10, vertical = Metrics.space6),
-                            )
+                            LiftPill(liftMuscleName(m), on) { onSecondaries(if (on) secondaries - m else secondaries + m) }
                         }
                     }
                 }

@@ -3057,4 +3057,56 @@
     <string name="lift_status_detail">%1$s — %2$s</string>
     <string name="lift_n_min">%1$s min</string>
     <!-- /Lift Log -->
+    <!-- Lift Log UX: library, records, history. -->
+    <string name="lift_col_previous">Precedente</string>
+    <string name="lift_copy_previous_a11y">Usa i valori dell\'ultima volta: %1$s</string>
+    <string name="lift_record_badge_a11y">Record personale: %1$s</string>
+    <string name="lift_view_history_a11y">Record e cronologia di %1$s</string>
+    <string name="lift_new_records">Nuovi record personali</string>
+    <string name="lift_record_weight">Carico massimo</string>
+    <string name="lift_record_one_rep_max">Miglior 1RM stimato</string>
+    <string name="lift_record_set_volume">Miglior volume per serie</string>
+    <string name="lift_exercise_history_subtitle">Ogni sessione con questo esercizio, dalla più recente.</string>
+    <string name="lift_reading_history">Lettura della cronologia…</string>
+    <string name="lift_no_history">Nessuna sessione conclusa include ancora questo esercizio.</string>
+    <string name="lift_personal_records">Record personali</string>
+    <string name="lift_all_time">Di sempre</string>
+    <string name="lift_e1rm_trend">1RM stimato</string>
+    <string name="lift_per_session">Miglior serie per sessione</string>
+    <string name="lift_history">Cronologia</string>
+    <string name="lift_every_session">Tutte le sessioni</string>
+    <string name="lift_trend_a11y">1RM stimato: da %1$s a %2$s in %3$d sessioni.</string>
+    <string name="lift_library">Libreria</string>
+    <string name="lift_browse_library">Sfoglia la libreria di esercizi</string>
+    <string name="lift_library_title">Libreria di esercizi</string>
+    <string name="lift_library_subtitle">%1$d esercizi. I nomi sono in inglese. Sceglierne uno compila i suoi muscoli, che puoi ancora cambiare.</string>
+    <string name="lift_search_exercises">Cerca esercizi</string>
+    <string name="lift_filter_all">Tutti</string>
+    <string name="lift_no_matches">Nessun esercizio corrisponde a questi filtri.</string>
+    <string name="lift_eq_barbell">Bilanciere</string>
+    <string name="lift_eq_dumbbell">Manubrio</string>
+    <string name="lift_eq_cable">Cavo</string>
+    <string name="lift_eq_machine">Macchina</string>
+    <string name="lift_eq_bodyweight">Corpo libero</string>
+    <string name="lift_eq_kettlebell">Kettlebell</string>
+    <string name="lift_eq_band">Elastico</string>
+    <string name="lift_eq_ez_bar">Bilanciere EZ</string>
+    <string name="lift_eq_other">Altro</string>
+    <string name="lift_more_options">Altre opzioni</string>
+    <string name="lift_move_up">Sposta su</string>
+    <string name="lift_move_down">Sposta giù</string>
+    <string name="lift_remove">Rimuovi</string>
+    <string name="lift_about_these_numbers">Su questi numeri</string>
+    <string name="lift_records_and_history">Record e cronologia</string>
+    <string name="lift_show_all_n">Mostra tutti (%1$d)</string>
+    <string name="lift_show_fewer">Mostra meno</string>
+    <string name="lift_previous_value">%1$s×%2$s</string>
+    <string name="lift_record_line">%1$s · %2$s</string>
+    <string name="lift_approx_value">≈ %1$s</string>
+    <string name="lift_set_value">%1$s × %2$d</string>
+    <plurals name="lift_n_exercises">
+        <item quantity="one">%1$d esercizio</item>
+        <item quantity="other">%1$d esercizi</item>
+    </plurals>
+    <!-- /Lift Log UX -->
 </resources>

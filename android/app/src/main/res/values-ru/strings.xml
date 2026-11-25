@@ -2993,4 +2993,58 @@
     <string name="lift_status_detail">%1$s — %2$s</string>
     <string name="lift_n_min">%1$s мин</string>
     <!-- /Lift Log -->
+    <!-- Lift Log UX: library, records, history. -->
+    <string name="lift_col_previous">Прошлый раз</string>
+    <string name="lift_copy_previous_a11y">Взять значения прошлого раза: %1$s</string>
+    <string name="lift_record_badge_a11y">Личный рекорд: %1$s</string>
+    <string name="lift_view_history_a11y">Рекорды и история: %1$s</string>
+    <string name="lift_new_records">Новые личные рекорды</string>
+    <string name="lift_record_weight">Максимальный вес</string>
+    <string name="lift_record_one_rep_max">Лучший расчётный 1ПМ</string>
+    <string name="lift_record_set_volume">Лучший объём подхода</string>
+    <string name="lift_exercise_history_subtitle">Все тренировки с этим упражнением, сначала последние.</string>
+    <string name="lift_reading_history">Чтение истории…</string>
+    <string name="lift_no_history">Ни одна завершённая тренировка пока не включает это упражнение.</string>
+    <string name="lift_personal_records">Личные рекорды</string>
+    <string name="lift_all_time">За всё время</string>
+    <string name="lift_e1rm_trend">Расчётный 1ПМ</string>
+    <string name="lift_per_session">Лучший подход за тренировку</string>
+    <string name="lift_history">История</string>
+    <string name="lift_every_session">Все тренировки</string>
+    <string name="lift_trend_a11y">Расчётный 1ПМ: с %1$s до %2$s, тренировок: %3$d.</string>
+    <string name="lift_library">Библиотека</string>
+    <string name="lift_browse_library">Открыть библиотеку упражнений</string>
+    <string name="lift_library_title">Библиотека упражнений</string>
+    <string name="lift_library_subtitle">Упражнений: %1$d. Названия на английском. Выбор упражнения заполняет его мышцы — их можно изменить.</string>
+    <string name="lift_search_exercises">Поиск упражнений</string>
+    <string name="lift_filter_all">Все</string>
+    <string name="lift_no_matches">Ни одно упражнение не подходит под эти фильтры.</string>
+    <string name="lift_eq_barbell">Штанга</string>
+    <string name="lift_eq_dumbbell">Гантель</string>
+    <string name="lift_eq_cable">Блок</string>
+    <string name="lift_eq_machine">Тренажёр</string>
+    <string name="lift_eq_bodyweight">Собственный вес</string>
+    <string name="lift_eq_kettlebell">Гиря</string>
+    <string name="lift_eq_band">Эспандер</string>
+    <string name="lift_eq_ez_bar">EZ-гриф</string>
+    <string name="lift_eq_other">Другое</string>
+    <string name="lift_more_options">Ещё</string>
+    <string name="lift_move_up">Выше</string>
+    <string name="lift_move_down">Ниже</string>
+    <string name="lift_remove">Убрать</string>
+    <string name="lift_about_these_numbers">Об этих цифрах</string>
+    <string name="lift_records_and_history">Рекорды и история</string>
+    <string name="lift_show_all_n">Показать все (%1$d)</string>
+    <string name="lift_show_fewer">Показать меньше</string>
+    <string name="lift_previous_value">%1$s×%2$s</string>
+    <string name="lift_record_line">%1$s · %2$s</string>
+    <string name="lift_approx_value">≈ %1$s</string>
+    <string name="lift_set_value">%1$s × %2$d</string>
+    <plurals name="lift_n_exercises">
+        <item quantity="one">%1$d упражнение</item>
+        <item quantity="few">%1$d упражнения</item>
+        <item quantity="many">%1$d упражнений</item>
+        <item quantity="other">%1$d упражнения</item>
+    </plurals>
+    <!-- /Lift Log UX -->
 </resources>

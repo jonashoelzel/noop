@@ -2,15 +2,22 @@ package com.noop.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -98,31 +105,20 @@ internal fun LiftProgramEditorSheet(vm: AppViewModel, program: LiftProgramRow?, 
             if (items.isEmpty()) {
                 NoopCard { Text(stringResource(R.string.lift_no_exercises), style = NoopType.footnote, color = Palette.textSecondary) }
             }
-            items.forEachIndexed { index, item ->
+            if (items.isNotEmpty()) {
                 NoopCard {
-                    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(Metrics.gap)) {
-                        Column(
-                            Modifier
-                                .weight(1f)
-                                .clickable { editingItem = item },
-                            verticalArrangement = Arrangement.spacedBy(3.dp),
-                        ) {
-                            Text(item.exercise, style = NoopType.headline, color = Palette.textPrimary)
-                            Text(liftTargetSummary(item, system), style = NoopType.caption, color = Palette.textSecondary)
-                            item.note?.takeIf { it.isNotEmpty() }?.let {
-                                Text(it, style = NoopType.footnote, color = Palette.textTertiary, maxLines = 2)
-                            }
-                        }
-                        Column {
-                            IconButton(onClick = { swap(items, index, index - 1) }, enabled = index > 0) {
-                                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null, tint = Palette.textSecondary)
-                            }
-                            IconButton(onClick = { swap(items, index, index + 1) }, enabled = index < items.size - 1) {
-                                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = Palette.textSecondary)
-                            }
-                            IconButton(onClick = { items.removeAt(index) }) {
-                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.lift_delete), tint = Palette.statusCritical)
-                            }
+                    Column {
+                        items.forEachIndexed { index, item ->
+                            if (index > 0) HorizontalDivider(color = Palette.hairline.copy(alpha = 0.6f))
+                            ProgramLine(
+                                index = index,
+                                item = item,
+                                count = items.size,
+                                system = system,
+                                onOpen = { editingItem = item },
+                                onMove = { to -> swap(items, index, to) },
+                                onRemove = { items.removeAt(index) },
+                            )
                         }
                     }
                 }
@@ -172,6 +168,68 @@ internal fun LiftProgramEditorSheet(vm: AppViewModel, program: LiftProgramRow?, 
             },
             dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text(stringResource(R.string.lift_cancel)) } },
         )
+    }
+}
+
+/** One line of the program: number, name and targets, and a menu for order and removal. */
+@Composable
+private fun ProgramLine(
+    index: Int,
+    item: LiftProgramItemRow,
+    count: Int,
+    system: UnitSystem,
+    onOpen: () -> Unit,
+    onMove: (Int) -> Unit,
+    onRemove: () -> Unit,
+) {
+    var menu by remember { mutableStateOf(false) }
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onOpen)
+            .padding(vertical = Metrics.space8),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Metrics.space12),
+    ) {
+        Text(
+            (index + 1).toString(),
+            style = NoopType.captionNumber,
+            color = Palette.textTertiary,
+            modifier = Modifier.width(18.dp),
+        )
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
+            Text(item.exercise, style = NoopType.body, color = Palette.textPrimary, maxLines = 2)
+            Text(liftTargetSummary(item, system), style = NoopType.caption, color = Palette.textSecondary)
+            item.note?.takeIf { it.isNotEmpty() }?.let {
+                Text(it, style = NoopType.footnote, color = Palette.textTertiary, maxLines = 1)
+            }
+        }
+        Box {
+            IconButton(onClick = { menu = true }) {
+                Icon(Icons.Filled.MoreVert, contentDescription = stringResource(R.string.lift_more_options), tint = Palette.textSecondary)
+            }
+            DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
+                if (index > 0) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.lift_move_up)) },
+                        leadingIcon = { Icon(Icons.Filled.KeyboardArrowUp, contentDescription = null) },
+                        onClick = { menu = false; onMove(index - 1) },
+                    )
+                }
+                if (index < count - 1) {
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.lift_move_down)) },
+                        leadingIcon = { Icon(Icons.Filled.KeyboardArrowDown, contentDescription = null) },
+                        onClick = { menu = false; onMove(index + 1) },
+                    )
+                }
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.lift_remove), color = Palette.statusCritical) },
+                    leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = Palette.statusCritical) },
+                    onClick = { menu = false; onRemove() },
+                )
+            }
+        }
     }
 }
 
@@ -242,30 +300,17 @@ private fun LiftProgramItemEditor(
         stringResource(if (item == null) R.string.lift_add_exercise else R.string.lift_edit_exercise),
         stringResource(R.string.lift_item_subtitle),
     )
-    Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
-        SectionHeader(stringResource(R.string.lift_exercise), overline = stringResource(R.string.lift_movement))
-        NoopCard {
-            Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
-                LiftTextField(stringResource(R.string.lift_exercise), exercise, { exercise = it }, stringResource(R.string.lift_exercise_placeholder))
-                val suggestions = liftSuggestions(vocabulary, exercise)
-                if (suggestions.isNotEmpty()) {
-                    Overline(stringResource(R.string.lift_used_before))
-                    for (row in suggestions) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            LiftExerciseSuggestion(row, onClick = {
-                                exercise = row.name
-                                primary = LiftMuscle.fromRaw(row.primaryMuscle)
-                                secondaries = LiftMuscle.decodeList(row.secondaryMuscles).toSet()
-                            }, modifier = Modifier.weight(1f))
-                            IconButton(onClick = { forgetting = row }) {
-                                Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.lift_forget), tint = Palette.textTertiary)
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+    LiftExerciseChooser(
+        vocabulary = vocabulary,
+        exercise = exercise,
+        onExercise = { exercise = it },
+        onPick = { picked ->
+            exercise = picked.name
+            primary = picked.primary
+            secondaries = picked.secondaries.toSet()
+        },
+        onForget = { forgetting = it },
+    )
     LiftMusclePicker(primary, secondaries, { primary = it }, { secondaries = it })
     Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
         SectionHeader(stringResource(R.string.lift_targets), overline = stringResource(R.string.lift_aiming_for))

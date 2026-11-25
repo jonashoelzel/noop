@@ -62,6 +62,7 @@ internal fun LiftSessionDetailSheet(vm: AppViewModel, session: LiftSessionRow, o
     var detail by remember { mutableStateOf<LiftLogRepository.Detail?>(null) }
     var confirmingDelete by remember { mutableStateOf(false) }
     var deleting by remember { mutableStateOf(false) }
+    var history by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(session.id) { detail = vm.liftLog.detail(session) }
 
     val date = remember(session.startTs) {
@@ -85,7 +86,9 @@ internal fun LiftSessionDetailSheet(vm: AppViewModel, session: LiftSessionRow, o
                 NoopCard { Text(stringResource(R.string.lift_none_performed), style = NoopType.footnote, color = Palette.textSecondary) }
             }
             for (summary in LiftMetrics.perExercise(rows)) {
-                ExerciseCard(summary, performed.filter { it.exercise == summary.exercise }.sortedBy { it.ord }, d.previousVolume[summary.exercise], system)
+                ExerciseCard(summary, performed.filter { it.exercise == summary.exercise }.sortedBy { it.ord }, d.previousVolume[summary.exercise], system) {
+                    history = summary.exercise
+                }
             }
         }
         if (performed.isNotEmpty()) {
@@ -102,6 +105,7 @@ internal fun LiftSessionDetailSheet(vm: AppViewModel, session: LiftSessionRow, o
         ) { confirmingDelete = true }
     }
 
+    history?.let { name -> LiftExerciseHistorySheet(vm, name, onDismiss = { history = null }) }
     if (confirmingDelete) {
         AlertDialog(
             onDismissRequest = { confirmingDelete = false },
@@ -165,11 +169,24 @@ private fun Tile(label: String, value: String, caption: String) {
 }
 
 @Composable
-private fun ExerciseCard(summary: LiftMetrics.ExerciseSummary, sets: List<LiftSetEntity>, previousVolume: Double?, system: UnitSystem) {
+private fun ExerciseCard(
+    summary: LiftMetrics.ExerciseSummary,
+    sets: List<LiftSetEntity>,
+    previousVolume: Double?,
+    system: UnitSystem,
+    onHistory: () -> Unit,
+) {
     NoopCard {
         Column(verticalArrangement = Arrangement.spacedBy(Metrics.space12)) {
-            Column(verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
-                Text(summary.exercise, style = NoopType.headline, color = Palette.textPrimary)
+            val historyA11y = stringResource(R.string.lift_view_history_a11y, summary.exercise)
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onHistory)
+                    .semantics(mergeDescendants = true) { contentDescription = historyA11y },
+                verticalArrangement = Arrangement.spacedBy(Metrics.space2),
+            ) {
+                Text(summary.exercise, style = NoopType.headline, color = Palette.effortColor)
                 sets.firstOrNull()?.let {
                     Text(
                         liftMuscleLine(LiftMuscle.fromRaw(it.primaryMuscle), LiftMuscle.decodeList(it.secondaryMuscles)),

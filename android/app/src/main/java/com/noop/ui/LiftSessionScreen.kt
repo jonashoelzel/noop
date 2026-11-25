@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.AddCircleOutline
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.RemoveCircleOutline
 import androidx.compose.material3.AlertDialog
@@ -60,6 +63,7 @@ import com.noop.data.LiftExerciseVocabularyFull
 import com.noop.data.LiftMuscle
 import com.noop.lift.LiftFormat
 import com.noop.lift.LiftPlanItem
+import com.noop.lift.LiftRecords
 import com.noop.lift.LiftSessionController
 import com.noop.lift.LiftSessionEngine
 import com.noop.lift.LiftSlot
@@ -86,6 +90,9 @@ fun LiftSessionScreen(vm: AppViewModel, onClose: () -> Unit) {
     val engine = state.engine
     var finishing by remember { mutableStateOf(false) }
     var adding by remember { mutableStateOf(false) }
+    var history by remember { mutableStateOf<String?>(null) }
+    // Each exercise's personal bests from BEFORE this session, for the record badges.
+    var bests by remember { mutableStateOf<Map<String, LiftRecords.Best>>(emptyMap()) }
 
     // Last time's numbers, re-read whenever the session's exercises change (an added exercise done before
     // shows its last numbers in grey like every other line).
@@ -93,6 +100,7 @@ fun LiftSessionScreen(vm: AppViewModel, onClose: () -> Unit) {
     LaunchedEffect(exercises, engine?.startTs) {
         val e = controller.state.value.engine ?: return@LaunchedEffect
         controller.setLastSession(vm.liftLog.lastTime(e.plan, e.startTs))
+        bests = vm.liftLog.bestsBefore(e.plan.map { it.exercise }, e.startTs)
     }
 
     if (engine == null) {
@@ -130,7 +138,9 @@ fun LiftSessionScreen(vm: AppViewModel, onClose: () -> Unit) {
                     )
                 }
             }
-            itemsIndexed(engine.plan) { index, item -> ExerciseCard(controller, state, engine, index, item, system) }
+            itemsIndexed(engine.plan) { index, item ->
+                ExerciseCard(controller, state, engine, index, item, system, bests[item.exercise]) { history = item.exercise }
+            }
             item {
                 val canAdd = engine.plan.size < LiftSessionEngine.MAX_EXERCISES
                 Row(
@@ -158,15 +168,21 @@ fun LiftSessionScreen(vm: AppViewModel, onClose: () -> Unit) {
         }
     }
     if (finishing) {
-        LiftFinishSheet(vm, onDismiss = { finishing = false }, onDone = { finishing = false; onClose() })
+        LiftFinishSheet(vm, bests, onDismiss = { finishing = false }, onDone = { finishing = false; onClose() })
     }
+    history?.let { name -> LiftExerciseHistorySheet(vm, name, onDismiss = { history = null }) }
 }
 
-/** Width of the set-number column, shared by the heading and every row. */
-private val SET_COLUMN = 34.dp
+/** Width of the set-number column (number plus a record badge), shared by the heading and every row. */
+private val SET_COLUMN = 40.dp
 
 /** Width of the trailing tick column. */
-private val TICK_COLUMN = 30.dp
+private val TICK_COLUMN = 36.dp
+
+/** Column weights: last time's set is the widest text, RPE the narrowest. */
+private const val PREVIOUS_WEIGHT = 1.4f
+private const val NUMBER_WEIGHT = 1f
+private const val RPE_WEIGHT = 0.7f
 
 @Composable
 private fun ExerciseCard(
@@ -176,12 +192,34 @@ private fun ExerciseCard(
     index: Int,
     item: LiftPlanItem,
     system: UnitSystem,
+    prior: LiftRecords.Best?,
+    onHistory: () -> Unit,
 ) {
+    // Which rows set a record. Recorded sets only: a set not yet lifted has broken nothing.
+    val records = LiftRecords.recordsIn(
+        engine.slots(index).mapNotNull { slot ->
+            engine.recordedSet(slot)?.let {
+                val v = state.shownNumbers(slot)
+                LiftRecords.Candidate(slot, v.weightKg, v.reps, state.isWarmup(slot))
+            }
+        },
+        prior,
+    )
     NoopCard {
-        Column(verticalArrangement = Arrangement.spacedBy(Metrics.space12)) {
-            Column(verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
-                Text(item.exercise, style = NoopType.headline, color = Palette.textPrimary)
-                Text(liftMuscleLine(item.primaryMuscle, item.secondaryMuscles), style = NoopType.caption, color = Palette.textTertiary)
+        Column(verticalArrangement = Arrangement.spacedBy(Metrics.space8)) {
+            val historyA11y = stringResource(R.string.lift_view_history_a11y, item.exercise)
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onHistory)
+                    .semantics(mergeDescendants = true) { contentDescription = historyA11y },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
+                    Text(item.exercise, style = NoopType.headline, color = Palette.effortColor)
+                    Text(liftMuscleLine(item.primaryMuscle, item.secondaryMuscles), style = NoopType.caption, color = Palette.textTertiary)
+                }
+                Icon(Icons.Filled.Timeline, contentDescription = null, tint = Palette.textTertiary)
             }
             item.note?.takeIf { it.isNotEmpty() }?.let {
                 Text(
@@ -195,23 +233,27 @@ private fun ExerciseCard(
                         .padding(10.dp),
                 )
             }
-            Row(Modifier.padding(horizontal = Metrics.space8), horizontalArrangement = Arrangement.spacedBy(Metrics.space8)) {
+            Row(Modifier.padding(horizontal = Metrics.space6), horizontalArrangement = Arrangement.spacedBy(Metrics.space6)) {
                 Overline(stringResource(R.string.lift_col_set), Modifier.width(SET_COLUMN))
-                Overline(stringResource(if (system == UnitSystem.IMPERIAL) R.string.lift_col_lb else R.string.lift_col_kg), Modifier.weight(1f))
-                Overline(stringResource(R.string.lift_reps), Modifier.weight(1f))
-                Overline(stringResource(R.string.lift_col_rpe), Modifier.weight(1f))
+                Overline(stringResource(R.string.lift_col_previous), Modifier.weight(PREVIOUS_WEIGHT))
+                Overline(stringResource(if (system == UnitSystem.IMPERIAL) R.string.lift_col_lb else R.string.lift_col_kg), Modifier.weight(NUMBER_WEIGHT))
+                Overline(stringResource(R.string.lift_reps), Modifier.weight(NUMBER_WEIGHT))
+                Overline(stringResource(R.string.lift_col_rpe), Modifier.weight(RPE_WEIGHT))
                 Spacer(Modifier.width(TICK_COLUMN))
             }
-            for (slot in engine.slots(index)) {
-                SetRow(controller, state, engine, slot, system)
-                val stage = engine.stage
-                if (stage is LiftStage.Resting && stage.slot == slot) RestBand(engine)
+            // Rows sit close together: the green working row and the amber rest band separate them enough.
+            Column(verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
+                for (slot in engine.slots(index)) {
+                    SetRow(controller, state, engine, slot, system, records[slot].orEmpty())
+                    val stage = engine.stage
+                    if (stage is LiftStage.Resting && stage.slot == slot) RestBand(engine)
+                }
             }
             val canAdd = item.targetSets < LiftSessionEngine.MAX_SETS_PER_EXERCISE
             val canRemove = engine.canRemoveSet(index)
             val addA11y = stringResource(R.string.lift_add_set_a11y, item.exercise)
             val removeA11y = stringResource(R.string.lift_remove_set_a11y, item.exercise)
-            Row(Modifier.padding(horizontal = Metrics.space8), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.padding(horizontal = Metrics.space6), verticalAlignment = Alignment.CenterVertically) {
                 Row(
                     Modifier
                         .weight(1f)
@@ -244,6 +286,7 @@ private fun SetRow(
     engine: LiftSessionEngine,
     slot: LiftSlot,
     system: UnitSystem,
+    records: Set<LiftRecords.Kind>,
 ) {
     val recorded = engine.recordedSet(slot)
     val working = engine.stage == LiftStage.Working(slot)
@@ -260,30 +303,74 @@ private fun SetRow(
         Modifier
             .fillMaxWidth()
             .background(background, RoundedCornerShape(8.dp))
-            .padding(horizontal = Metrics.space8, vertical = Metrics.space6),
-        horizontalArrangement = Arrangement.spacedBy(Metrics.space8),
+            .padding(horizontal = Metrics.space6, vertical = Metrics.space2),
+        horizontalArrangement = Arrangement.spacedBy(Metrics.space6),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         // The set number IS the warm-up toggle: warm-ups are excluded from volume and the per-muscle counts.
         val warmA11y = if (warmup) stringResource(R.string.lift_warmup_set_a11y) else stringResource(R.string.lift_set_n_a11y, slot.setIndex)
-        Text(
-            if (warmup) stringResource(R.string.lift_warmup_mark) else slot.setIndex.toString(),
-            style = NoopType.captionNumber,
-            color = when {
-                warmup -> Palette.metricAmber
-                working -> Palette.textPrimary
-                else -> Palette.textSecondary
-            },
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            modifier = Modifier
+        Row(
+            Modifier
                 .width(SET_COLUMN)
-                .clickable { controller.setWarmup(slot, !warmup) }
-                .semantics { contentDescription = warmA11y },
+                .clickable { controller.setWarmup(slot, !warmup) },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                if (warmup) stringResource(R.string.lift_warmup_mark) else slot.setIndex.toString(),
+                style = NoopType.captionNumber,
+                color = when {
+                    warmup -> Palette.metricAmber
+                    working -> Palette.textPrimary
+                    else -> Palette.textSecondary
+                },
+                modifier = Modifier.semantics { contentDescription = warmA11y },
+            )
+            if (records.isNotEmpty()) {
+                val names = records.map { liftRecordName(it) }.joinToString(", ")
+                Icon(
+                    Icons.Filled.EmojiEvents,
+                    contentDescription = stringResource(R.string.lift_record_badge_a11y, names),
+                    tint = Palette.metricAmber,
+                    modifier = Modifier.padding(start = Metrics.space2).size(14.dp),
+                )
+            }
+        }
+        // Last time's numbers for this set; a tap copies them in (the usual "same again").
+        val previous = state.lastSession[engine.planItem(slot)?.exercise]?.get(slot.setIndex)
+        val previousText = previous?.takeIf { it.weightKg != null || it.reps != null }?.let {
+            stringResource(
+                R.string.lift_previous_value,
+                it.weightKg?.let { kg -> LiftFormat.trim(LiftFormat.display(kg, system)) } ?: "—",
+                it.reps?.toString() ?: "—",
+            )
+        }
+        val copyA11y = previousText?.let { stringResource(R.string.lift_copy_previous_a11y, it) }
+        Text(
+            previousText ?: "—",
+            style = NoopType.captionNumber,
+            color = Palette.textTertiary,
+            maxLines = 1,
+            modifier = Modifier
+                .weight(PREVIOUS_WEIGHT)
+                .then(
+                    if (previous != null && recorded == null) {
+                        Modifier
+                            .clickable {
+                                val now = controller.state.value.enteredValues(slot)
+                                controller.updateSet(slot, previous.weightKg, previous.reps, now.rpe, controller.state.value.isWarmup(slot))
+                            }
+                            .semantics { contentDescription = copyA11y ?: "" }
+                    } else {
+                        Modifier
+                    },
+                )
+                .padding(vertical = Metrics.space8),
         )
         NumberField(
             value = entered.weightKg?.let { LiftFormat.trim(LiftFormat.display(it, system)) } ?: "",
             ghost = grey.weightKg?.let { LiftFormat.trim(LiftFormat.display(it, system)) } ?: "—",
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(NUMBER_WEIGHT),
         ) { text ->
             val now = controller.state.value.enteredValues(slot)
             controller.updateSet(slot, LiftFormat.number(text)?.let { LiftFormat.kilograms(it, system) }, now.reps, now.rpe, controller.state.value.isWarmup(slot))
@@ -291,7 +378,7 @@ private fun SetRow(
         NumberField(
             value = entered.reps?.toString() ?: "",
             ghost = grey.reps?.toString() ?: "—",
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(NUMBER_WEIGHT),
         ) { text ->
             val now = controller.state.value.enteredValues(slot)
             controller.updateSet(slot, now.weightKg, text.trim().toIntOrNull(), now.rpe, controller.state.value.isWarmup(slot))
@@ -303,16 +390,25 @@ private fun SetRow(
         NumberField(
             value = entered.rpe?.let { LiftFormat.trim(it) } ?: "",
             ghost = rpeGhost,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(RPE_WEIGHT),
         ) { text ->
             val now = controller.state.value.enteredValues(slot)
             controller.updateSet(slot, now.weightKg, now.reps, LiftFormat.number(text), controller.state.value.isWarmup(slot))
         }
         // The tick both REPORTS and ACTS: filled when done, and tappable to start (or redo) this set.
-        IconButton(onClick = { controller.start(slot) }, modifier = Modifier.width(TICK_COLUMN)) {
+        // 40 dp tall rather than the 48 dp IconButton default: rows are what a session is made of, and
+        // the row itself is padded, so the touch target stays comfortable.
+        val tickA11y = stringResource(if (recorded == null) R.string.lift_start_set_a11y else R.string.lift_redo_set_a11y)
+        Box(
+            Modifier
+                .size(TICK_COLUMN, 40.dp)
+                .clickable { controller.start(slot) }
+                .semantics { contentDescription = tickA11y },
+            contentAlignment = Alignment.Center,
+        ) {
             Icon(
                 if (recorded == null) Icons.Filled.RadioButtonUnchecked else Icons.Filled.CheckCircle,
-                contentDescription = stringResource(if (recorded == null) R.string.lift_start_set_a11y else R.string.lift_redo_set_a11y),
+                contentDescription = null,
                 tint = if (recorded == null) Palette.textTertiary else Palette.statusPositive,
             )
         }
@@ -340,7 +436,7 @@ private fun NumberField(value: String, ghost: String, modifier: Modifier, onChan
         textStyle = NoopType.bodyNumber.copy(color = Palette.textPrimary),
         cursorBrush = SolidColor(Palette.accent),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier.onFocusChanged {
+        modifier = modifier.padding(vertical = Metrics.space8).onFocusChanged {
             focused = it.isFocused
             if (!it.isFocused) draft = value
         },
@@ -442,34 +538,25 @@ private fun LiftSessionExerciseSheet(
 
     LiftSheet(onDismiss) {
         LiftSheetTitle(stringResource(R.string.lift_add_exercise), stringResource(R.string.lift_add_exercise_subtitle))
-        Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
-            SectionHeader(stringResource(R.string.lift_exercise), overline = stringResource(R.string.lift_movement))
-            NoopCard {
-                Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
-                    LiftTextField(stringResource(R.string.lift_exercise), exercise, { typed ->
-                        exercise = typed
-                        // Typing a known name fills its muscles, unless some are already chosen.
-                        if (primary == null && secondaries.isEmpty()) {
-                            vocabulary.firstOrNull { it.name == typed.trim() }?.let {
-                                primary = LiftMuscle.fromRaw(it.primaryMuscle)
-                                secondaries = LiftMuscle.decodeList(it.secondaryMuscles).toSet()
-                            }
-                        }
-                    }, stringResource(R.string.lift_exercise_placeholder))
-                    val suggestions = liftSuggestions(vocabulary, exercise, limit = 8)
-                    if (suggestions.isNotEmpty()) {
-                        Overline(stringResource(R.string.lift_used_before))
-                        for (row in suggestions) {
-                            LiftExerciseSuggestion(row, onClick = {
-                                exercise = row.name
-                                primary = LiftMuscle.fromRaw(row.primaryMuscle)
-                                secondaries = LiftMuscle.decodeList(row.secondaryMuscles).toSet()
-                            })
-                        }
+        LiftExerciseChooser(
+            vocabulary = vocabulary,
+            exercise = exercise,
+            onExercise = { typed ->
+                exercise = typed
+                // Typing a known name fills its muscles, unless some are already chosen.
+                if (primary == null && secondaries.isEmpty()) {
+                    vocabulary.firstOrNull { it.name == typed.trim() }?.let {
+                        primary = LiftMuscle.fromRaw(it.primaryMuscle)
+                        secondaries = LiftMuscle.decodeList(it.secondaryMuscles).toSet()
                     }
                 }
-            }
-        }
+            },
+            onPick = { picked ->
+                exercise = picked.name
+                primary = picked.primary
+                secondaries = picked.secondaries.toSet()
+            },
+        )
         LiftMusclePicker(primary, secondaries, { primary = it }, { secondaries = it })
         Text(stringResource(R.string.lift_add_exercise_note), style = NoopType.footnote, color = Palette.textTertiary)
         LiftEditorFooter(
@@ -503,7 +590,7 @@ private enum class ProgramChoice { Update, Keep }
 
 /** Session RPE, what happens to sets never started, and whether the program keeps this session's changes. */
 @Composable
-private fun LiftFinishSheet(vm: AppViewModel, onDismiss: () -> Unit, onDone: () -> Unit) {
+private fun LiftFinishSheet(vm: AppViewModel, bests: Map<String, LiftRecords.Best>, onDismiss: () -> Unit, onDone: () -> Unit) {
     val controller = vm.liftSession
     val state by controller.state.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
@@ -521,8 +608,47 @@ private fun LiftFinishSheet(vm: AppViewModel, onDismiss: () -> Unit, onDone: () 
     val asksAboutProgram = changes.isNotEmpty() || added.isNotEmpty()
     val answered = (unfinished == 0 || unfinishedChoice != null) && (!asksAboutProgram || programChoice != null)
 
+    val system = UnitPrefs.system(LocalContext.current)
+    // Records count what was actually lifted, so sets never started are left out whatever the choice below.
+    val newRecords = remember(state) {
+        controller.setsToSave(completingUnfinished = false)
+            .groupBy { engine.planItem(it.slot)?.exercise }
+            .flatMap { (exercise, sets) ->
+                if (exercise == null) return@flatMap emptyList()
+                val bySlot = sets.associateBy { it.slot }
+                LiftRecords.recordsIn(sets.map { LiftRecords.Candidate(it.slot, it.weightKg, it.reps, it.isWarmup) }, bests[exercise])
+                    .flatMap { (slot, kinds) -> kinds.map { Triple(exercise, it, bySlot.getValue(slot)) } }
+            }
+    }
+
     LiftSheet(onDismiss) {
         LiftSheetTitle(stringResource(R.string.lift_finish_session), stringResource(R.string.lift_finish_subtitle))
+        if (newRecords.isNotEmpty()) {
+            NoopCard(tint = Palette.metricAmber) {
+                Column(verticalArrangement = Arrangement.spacedBy(Metrics.space8)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Metrics.space8)) {
+                        Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = Palette.metricAmber)
+                        Text(stringResource(R.string.lift_new_records), style = NoopType.headline, color = Palette.textPrimary)
+                    }
+                    for ((exercise, lines) in newRecords.groupBy { it.first }) {
+                        Column(verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
+                            Text(exercise, style = NoopType.body, color = Palette.textPrimary)
+                            for ((_, kind, set) in lines) {
+                                Text(
+                                    stringResource(
+                                        R.string.lift_record_line,
+                                        liftRecordName(kind),
+                                        liftRecordValue(kind, set.weightKg, set.reps, system),
+                                    ),
+                                    style = NoopType.caption,
+                                    color = Palette.textSecondary,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
         NoopCard {
             Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
                 LiftTextField(stringResource(R.string.lift_session_rpe_q), rpeText, { rpeText = it.replace(',', '.') }, "7", numeric = true)

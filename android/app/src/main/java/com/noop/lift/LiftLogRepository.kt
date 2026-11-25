@@ -38,16 +38,23 @@ class LiftLogRepository(
         val history: List<LiftSessionRow>,
         /** This week's fractional sets per muscle. */
         val weekCounts: Map<LiftMuscle, Double>,
+        /** Each program's lines, by program id, so a program card can say what it holds. */
+        val programItems: Map<String, List<LiftProgramItemRow>> = emptyMap(),
+        /** The remembered exercises, most recently used first. */
+        val exercises: List<LiftExerciseRow> = emptyList(),
     )
 
     suspend fun hub(): Hub {
         val id = deviceId()
         val now = clock()
+        val programs = dao.liftPrograms(id)
         return Hub(
-            programs = dao.liftPrograms(id),
+            programs = programs,
             // An abandoned session is not history.
             history = dao.liftSessions(id, now - 180 * 86_400L, now).filter { it.endTs != null }.sortedByDescending { it.startTs },
             weekCounts = dao.liftSetCounts(id, now - 7 * 86_400L, now).fractional,
+            programItems = programs.associate { it.id to dao.liftProgramItems(it.id) },
+            exercises = dao.liftExercises(id),
         )
     }
 
@@ -254,6 +261,45 @@ class LiftLogRepository(
         dao.deleteLiftSession(session.id)
         workout?.let(deleteWorkout)
     }
+
+    // MARK: - Exercise history and records
+
+    /** One finished session's sets of one exercise. */
+    data class ExerciseSession(val session: LiftSessionRow, val sets: List<LiftSetEntity>)
+
+    /**
+     * Every finished session that logged [exercise], newest first, with that exercise's sets in the order
+     * they were done. Sets with zero reps (never performed) are left out, as everywhere else.
+     */
+    suspend fun exerciseHistory(exercise: String): List<ExerciseSession> =
+        finishedSessions(before = clock() + 1).mapNotNull { session ->
+            val sets = dao.liftSets(session.id)
+                .filter { it.exercise == exercise && com.noop.analytics.LiftMetrics.isPerformed(it.reps) }
+                .sortedBy { it.ord }
+            if (sets.isEmpty()) null else ExerciseSession(session, sets)
+        }
+
+    /**
+     * The personal bests for each of [exercises] from every session that STARTED before [before], so the
+     * running session (and a session being re-read) never competes with itself. An exercise never logged
+     * before has no entry, which is what tells [LiftRecords.recordsIn] there is nothing to beat yet.
+     */
+    suspend fun bestsBefore(exercises: Collection<String>, before: Long): Map<String, LiftRecords.Best> {
+        val wanted = exercises.toSet()
+        if (wanted.isEmpty()) return emptyMap()
+        val out = HashMap<String, LiftRecords.Best>()
+        for (session in finishedSessions(before)) {
+            for (s in dao.liftSets(session.id)) {
+                if (s.exercise !in wanted || !com.noop.analytics.LiftMetrics.isPerformed(s.reps)) continue
+                out[s.exercise] = (out[s.exercise] ?: LiftRecords.Best()).adding(s.weightKg, s.reps, s.isWarmup)
+            }
+        }
+        return out
+    }
+
+    /** Finished sessions that started before [before], newest first. */
+    private suspend fun finishedSessions(before: Long): List<LiftSessionRow> =
+        dao.liftSessions(deviceId(), 0L, before - 1).filter { it.endTs != null }.sortedByDescending { it.startTs }
 
     suspend fun weekCounts(): LiftSetCounts {
         val now = clock()
