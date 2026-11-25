@@ -3059,4 +3059,55 @@
     <string name="lift_status_detail">%1$s — %2$s</string>
     <string name="lift_n_min">%1$s 分钟</string>
     <!-- /Lift Log -->
+    <!-- Lift Log UX: library, records, history. -->
+    <string name="lift_col_previous">上次</string>
+    <string name="lift_copy_previous_a11y">使用上次的数值：%1$s</string>
+    <string name="lift_record_badge_a11y">个人纪录：%1$s</string>
+    <string name="lift_view_history_a11y">%1$s 的纪录与历史</string>
+    <string name="lift_new_records">新的个人纪录</string>
+    <string name="lift_record_weight">最大重量</string>
+    <string name="lift_record_one_rep_max">最佳估算 1RM</string>
+    <string name="lift_record_set_volume">最佳单组容量</string>
+    <string name="lift_exercise_history_subtitle">包含该动作的每次训练，最新的在前。</string>
+    <string name="lift_reading_history">正在读取历史…</string>
+    <string name="lift_no_history">还没有包含该动作的已完成训练。</string>
+    <string name="lift_personal_records">个人纪录</string>
+    <string name="lift_all_time">全部时间</string>
+    <string name="lift_e1rm_trend">估算 1RM</string>
+    <string name="lift_per_session">每次训练的最佳组</string>
+    <string name="lift_history">历史</string>
+    <string name="lift_every_session">所有训练</string>
+    <string name="lift_trend_a11y">估算 1RM：%3$d 次训练中从 %1$s 到 %2$s。</string>
+    <string name="lift_library">动作库</string>
+    <string name="lift_browse_library">浏览动作库</string>
+    <string name="lift_library_title">动作库</string>
+    <string name="lift_library_subtitle">共 %1$d 个动作。名称为英文。选择后会填入其肌群，仍可修改。</string>
+    <string name="lift_search_exercises">搜索动作</string>
+    <string name="lift_filter_all">全部</string>
+    <string name="lift_no_matches">没有符合筛选条件的动作。</string>
+    <string name="lift_eq_barbell">杠铃</string>
+    <string name="lift_eq_dumbbell">哑铃</string>
+    <string name="lift_eq_cable">绳索</string>
+    <string name="lift_eq_machine">器械</string>
+    <string name="lift_eq_bodyweight">自重</string>
+    <string name="lift_eq_kettlebell">壶铃</string>
+    <string name="lift_eq_band">弹力带</string>
+    <string name="lift_eq_ez_bar">曲杆</string>
+    <string name="lift_eq_other">其他</string>
+    <string name="lift_more_options">更多选项</string>
+    <string name="lift_move_up">上移</string>
+    <string name="lift_move_down">下移</string>
+    <string name="lift_remove">移除</string>
+    <string name="lift_about_these_numbers">关于这些数字</string>
+    <string name="lift_records_and_history">纪录与历史</string>
+    <string name="lift_show_all_n">显示全部（%1$d）</string>
+    <string name="lift_show_fewer">收起</string>
+    <string name="lift_previous_value">%1$s×%2$s</string>
+    <string name="lift_record_line">%1$s · %2$s</string>
+    <string name="lift_approx_value">≈ %1$s</string>
+    <string name="lift_set_value">%1$s × %2$d</string>
+    <plurals name="lift_n_exercises">
+        <item quantity="other">%1$d 个动作</item>
+    </plurals>
+    <!-- /Lift Log UX -->
 </resources>

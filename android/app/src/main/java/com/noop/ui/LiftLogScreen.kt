@@ -23,6 +23,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ModalBottomSheet
@@ -41,13 +43,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.noop.R
 import com.noop.analytics.LiftMetrics
+import com.noop.data.LiftExerciseRow
 import com.noop.data.LiftMuscle
 import com.noop.data.LiftProgramRow
 import com.noop.data.LiftSessionRow
@@ -74,6 +79,7 @@ fun LiftLogScreen(vm: AppViewModel, onOpenSession: () -> Unit) {
     var reload by remember { mutableIntStateOf(0) }
     var editing by remember { mutableStateOf<ProgramEditTarget?>(null) }
     var viewing by remember { mutableStateOf<LiftSessionRow?>(null) }
+    var history by remember { mutableStateOf<String?>(null) }
 
     // Also on a saved session: the session screen cannot call back into this one.
     LaunchedEffect(reload, session.savedSessions) { hub = vm.liftLog.hub() }
@@ -105,6 +111,7 @@ fun LiftLogScreen(vm: AppViewModel, onOpenSession: () -> Unit) {
         )
         WeekSection(hub?.weekCounts.orEmpty())
         HistorySection(hub?.history.orEmpty()) { viewing = it }
+        ExercisesSection(hub?.exercises.orEmpty()) { history = it }
     }
 
     editing?.let { target ->
@@ -113,6 +120,7 @@ fun LiftLogScreen(vm: AppViewModel, onOpenSession: () -> Unit) {
     viewing?.let { row ->
         LiftSessionDetailSheet(vm, row, onDismiss = { viewing = null }, onChanged = { reload++ })
     }
+    history?.let { name -> LiftExerciseHistorySheet(vm, name, onDismiss = { history = null }) }
 }
 
 private class ProgramEditTarget(val program: LiftProgramRow?)
@@ -171,7 +179,33 @@ private fun ProgramsSection(
                             program.note?.takeIf { it.isNotEmpty() }?.let {
                                 Text(it, style = NoopType.caption, color = Palette.textSecondary, maxLines = 3)
                             }
-                            Text(stringResource(R.string.lift_tap_to_edit), style = NoopType.footnote, color = Palette.textTertiary)
+                            // What the program holds, so the right one is picked without opening it.
+                            val items = hub.programItems[program.id].orEmpty()
+                            if (items.isNotEmpty()) {
+                                Text(
+                                    items.joinToString(", ") { it.exercise },
+                                    style = NoopType.caption,
+                                    color = Palette.textSecondary,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                val sets = items.sumOf { it.targetSets ?: 0 }
+                                Text(
+                                    if (sets > 0) {
+                                        stringResource(
+                                            R.string.lift_record_line,
+                                            pluralStringResource(R.plurals.lift_n_exercises, items.size, items.size),
+                                            pluralStringResource(R.plurals.lift_n_sets, sets, sets),
+                                        )
+                                    } else {
+                                        pluralStringResource(R.plurals.lift_n_exercises, items.size, items.size)
+                                    },
+                                    style = NoopType.footnote,
+                                    color = Palette.textTertiary,
+                                )
+                            } else {
+                                Text(stringResource(R.string.lift_tap_to_edit), style = NoopType.footnote, color = Palette.textTertiary)
+                            }
                         }
                         val a11y = stringResource(R.string.lift_start_program_a11y)
                         NoopButton(
@@ -206,7 +240,19 @@ private fun WeekSection(counts: Map<LiftMuscle, Double>) {
             } else {
                 Column(verticalArrangement = Arrangement.spacedBy(Metrics.space12)) {
                     for (m in ordered) MuscleBar(m, counts[m] ?: 0.0)
-                    Text(stringResource(R.string.lift_week_caption), style = NoopType.footnote, color = Palette.textTertiary)
+                    // The research caveat matters, but once read it need not take six lines every visit.
+                    var explained by remember { mutableStateOf(false) }
+                    Row(
+                        Modifier.clickable { explained = !explained },
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Metrics.space6),
+                    ) {
+                        Icon(Icons.Outlined.Info, contentDescription = null, tint = Palette.textTertiary, modifier = Modifier.size(16.dp))
+                        Text(stringResource(R.string.lift_about_these_numbers), style = NoopType.footnote, color = Palette.textSecondary)
+                    }
+                    if (explained) {
+                        Text(stringResource(R.string.lift_week_caption), style = NoopType.footnote, color = Palette.textTertiary)
+                    }
                 }
             }
         }
@@ -282,6 +328,56 @@ private fun HistorySection(history: List<LiftSessionRow>, onOpen: (LiftSessionRo
         }
     }
 }
+
+/** The remembered exercises; each opens its records and history. */
+@Composable
+private fun ExercisesSection(exercises: List<LiftExerciseRow>, onOpen: (String) -> Unit) {
+    if (exercises.isEmpty()) return
+    var showAll by remember { mutableStateOf(false) }
+    val shown = if (showAll) exercises else exercises.take(EXERCISES_SHOWN)
+    Column(verticalArrangement = Arrangement.spacedBy(Metrics.gap)) {
+        SectionHeader(stringResource(R.string.lift_exercises), overline = stringResource(R.string.lift_records_and_history))
+        NoopCard {
+            Column {
+                shown.forEachIndexed { i, row ->
+                    if (i > 0) HorizontalDivider(color = Palette.hairline.copy(alpha = 0.6f))
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable { onOpen(row.name) }
+                            .padding(vertical = Metrics.space10),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Metrics.space2)) {
+                            Text(row.name, style = NoopType.body, color = Palette.textPrimary)
+                            Text(
+                                liftMuscleLine(LiftMuscle.fromRaw(row.primaryMuscle), LiftMuscle.decodeList(row.secondaryMuscles)),
+                                style = NoopType.caption,
+                                color = Palette.textTertiary,
+                            )
+                        }
+                        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Palette.textSecondary)
+                    }
+                }
+                if (exercises.size > EXERCISES_SHOWN) {
+                    HorizontalDivider(color = Palette.hairline.copy(alpha = 0.6f))
+                    Text(
+                        stringResource(if (showAll) R.string.lift_show_fewer else R.string.lift_show_all_n, exercises.size),
+                        style = NoopType.body,
+                        color = Palette.effortColor,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showAll = !showAll }
+                            .padding(vertical = Metrics.space10),
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** How many exercises the hub lists before "Show all". */
+private const val EXERCISES_SHOWN = 5
 
 /** A full-height sheet holding one scrollable editor. */
 @OptIn(ExperimentalMaterial3Api::class)
